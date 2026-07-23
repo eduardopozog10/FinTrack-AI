@@ -1,21 +1,9 @@
 from fastapi import APIRouter
 
-from app.schemas.message import MessageRequest
-from app.core.config import settings
+from app.api.transaction_routes import router as transaction_router
+from app.api.message_routes import router as message_router
 
 router = APIRouter()
 
-
-@router.get("/")
-def root():
-    return {
-        "message": f"Welcome to {settings.app_name}!"
-    }
-
-
-@router.post("/messages")
-def receive_message(request: MessageRequest):
-    return {
-        "status": "received",
-        "message": request.message
-    }
+router.include_router(message_router)
+router.include_router(transaction_router)
