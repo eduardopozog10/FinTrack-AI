@@ -1,26 +1,13 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+
+from app.api.routes import router
+from app.core.config import settings
+
 
 app = FastAPI(
-    title="FinTrack AI",
-    description="AI-powered personal finance assistant.",
-    version="0.1.0",
+    title=settings.app_name,
+    description=settings.description,
+    version=settings.version,
 )
 
-class MessageRequest(BaseModel):
-    message: str
-
-
-@app.get("/")
-def root():
-    return {
-        "message": "Welcome to FinTrack AI!"
-    }
-
-@app.post("/messages")
-def receive_message(request: MessageRequest):
-    return {
-        "status": "received",
-        "message": request.message
-    }
-
+app.include_router(router)

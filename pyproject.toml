@@ -1,10 +1,11 @@
 [project]
 name = "fintrack-ai"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-powered personal finance assistant that understands natural language."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.139.2",
+    "pydantic-settings>=2.14.2",
     "uvicorn>=0.51.0",
 ]
