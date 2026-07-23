@@ -1,5 +1,7 @@
 from sqlmodel import SQLModel, Session, create_engine
+
 from app.models.transaction import Transaction
+from app.models.user import User
 
 DATABASE_URL = "sqlite:///fintrack.db"
 
