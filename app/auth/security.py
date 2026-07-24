@@ -1,13 +1,12 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 
 from jose import jwt
 from passlib.context import CryptContext
 
-
-SECRET_KEY = "CAMBIAR_POR_UNA_CLAVE_SUPER_SECRETA"
+# Cambia esta clave por una larga y segura cuando pases a producción
+SECRET_KEY = "fintrack-super-secret-key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
-
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -18,29 +17,23 @@ pwd_context = CryptContext(
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
-def verify_password(
-    plain_password: str,
-    hashed_password: str,
-) -> bool:
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(
         plain_password,
         hashed_password,
     )
 
-def create_access_token(
-    data: dict,
-) -> str:
 
+def create_access_token(data: dict):
     to_encode = data.copy()
 
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES,
+    expire = datetime.now(UTC) + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
     )
 
     to_encode.update(
-        {
-            "exp": expire,
-        }
+        {"exp": expire}
     )
 
     return jwt.encode(

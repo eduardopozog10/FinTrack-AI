@@ -1,13 +1,7 @@
 from datetime import datetime
-from enum import Enum
+from app.constants.transaction_type import TransactionType
 from typing import Optional
-
 from sqlmodel import Field, SQLModel
-
-
-class TransactionType(str, Enum):
-    EXPENSE = "expense"
-    INCOME = "income"
 
 
 class Transaction(SQLModel, table=True):

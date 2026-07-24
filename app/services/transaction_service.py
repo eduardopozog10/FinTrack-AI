@@ -1,6 +1,9 @@
 from sqlmodel import Session, select
 
-from app.models.transaction import Transaction
+from app.models.transaction import (
+    Transaction,
+    TransactionType,
+)
 from app.schemas.transaction import (
     TransactionCreate,
     TransactionUpdate,
@@ -18,6 +21,29 @@ class TransactionService:
         session.refresh(db_transaction)
 
         return db_transaction
+
+    @staticmethod
+    def create_from_message(
+        session: Session,
+        amount: float,
+        category: str,
+        description: str,
+        transaction_type: TransactionType,
+    ):
+
+        db_transaction = Transaction(
+            description=description,
+            amount=amount,
+            transaction_type=transaction_type,
+            category=category,
+        )
+
+        session.add(db_transaction)
+        session.commit()
+        session.refresh(db_transaction)
+
+        return db_transaction
+
 
     @staticmethod
     def get_all(session: Session):
