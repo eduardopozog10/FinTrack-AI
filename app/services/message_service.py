@@ -42,7 +42,8 @@ class MessageService:
         print("Intent:", intent)
         print("Query:", query_type)
         print("Descripción:", description)
-
+        print("Monto:", amount)
+        
         return CommandRouter.route(
             session=session,
             intent=intent,

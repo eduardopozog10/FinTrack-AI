@@ -24,8 +24,115 @@ UPDATE_STOP_WORDS = [
     "transacción",
 ]
 
+COMMON_VERBS = [
+    "me compré",
+    "me compre",
+    "compré",
+    "compre",
+    "gasté",
+    "gaste",
+    "pagué",
+    "pague",
+    "aboné",
+    "abone",
+    "recibí",
+    "recibi",
+    "ingresé",
+    "ingrese",
+    "gané",
+    "gane",
+    "deposité",
+    "deposite",
+    "transferí",
+    "transferi",
+    "vendí",
+    "vendi",
+    "me pagaron",
+    "me depositaron",
+    "me transfirieron",
+]
+
+COMMON_CONNECTORS = [
+    "por",
+    "de",
+    "del",
+    "que fueron",
+    "que fue",
+    "que costó",
+    "que costo",
+    "costó",
+    "costo",
+]
+
+COMMON_ARTICLES = [
+    "el",
+    "la",
+    "los",
+    "las",
+    "un",
+    "una",
+    "unos",
+    "unas",
+    "mi",
+    "mis",
+]
+
 
 class DescriptionExtractor:
+
+    @staticmethod
+    def _remove_verbs(text: str):
+
+        for verb in sorted(COMMON_VERBS, key=len, reverse=True):
+            if text.startswith(verb):
+                text = text[len(verb):]
+                break
+
+        return text.strip()
+
+    @staticmethod
+    def _remove_amounts(text: str):
+
+        text = re.sub(
+            r"\$?[\d\.,]+",
+            "",
+            text,
+        )
+
+        text = re.sub(
+            r"\b(mil|lucas?)\b",
+            "",
+            text,
+        )
+
+        return text
+
+    @staticmethod
+    def _remove_connectors(text: str):
+
+        return re.sub(
+            rf"\b({'|'.join(COMMON_CONNECTORS)})\b",
+            "",
+            text,
+        )
+
+    @staticmethod
+    def _remove_articles(text: str):
+
+        return re.sub(
+            rf"\b({'|'.join(COMMON_ARTICLES)})\b",
+            "",
+            text,
+        )
+
+    @staticmethod
+    def _clean_spaces(text: str):
+
+        return re.sub(
+            r"\s+",
+            " ",
+            text,
+        ).strip()
 
     @staticmethod
     def extract(
@@ -35,12 +142,20 @@ class DescriptionExtractor:
         text = message.lower().strip()
 
         # ---------------------------------------------------
-        # Actualizar / Eliminar
+        # Casos de ingresos sin descripción
         # Ej:
-        # "actualiza netflix a 15990"
-        # "corrige el pago de netflix a 15990"
-        # "borra netflix"
-        # "elimina la compra del lider"
+        # "Me pagaron 50000"
+        # "Me depositaron 100000"
+        # ---------------------------------------------------
+
+        if re.fullmatch(
+            r"(me pagaron|me depositaron|me transfirieron)\s+\$?[\d\.,]+",
+            text,
+        ):
+            return "Ingreso"
+
+        # ---------------------------------------------------
+        # Actualizar / Eliminar
         # ---------------------------------------------------
 
         match = re.search(
@@ -58,18 +173,15 @@ class DescriptionExtractor:
                 description,
             )
 
-            description = re.sub(
-                r"\s+",
-                " ",
+            description = DescriptionExtractor._clean_spaces(
                 description,
-            ).strip()
+            )
 
             return description.title()
 
         # ---------------------------------------------------
         # Buscar "en ..."
-        # Ej:
-        # "gasté 15000 en jumbo"
+        # Ej: Gasté 15000 en Jumbo
         # ---------------------------------------------------
 
         match = re.search(
@@ -78,12 +190,30 @@ class DescriptionExtractor:
         )
 
         if match:
-            return match.group(1).strip().title()
+
+            description = match.group(1)
+
+            description = DescriptionExtractor._remove_amounts(
+                description,
+            )
+
+            description = DescriptionExtractor._remove_connectors(
+                description,
+            )
+
+            description = DescriptionExtractor._remove_articles(
+                description,
+            )
+
+            description = DescriptionExtractor._clean_spaces(
+                description,
+            )
+
+            return description.title()
 
         # ---------------------------------------------------
         # Buscar "para ..."
-        # Ej:
-        # "compré regalo para mamá"
+        # Ej: Compré regalo para mamá
         # ---------------------------------------------------
 
         match = re.search(
@@ -92,37 +222,53 @@ class DescriptionExtractor:
         )
 
         if match:
-            return match.group(1).strip().title()
+
+            description = match.group(1)
+
+            description = DescriptionExtractor._remove_amounts(
+                description,
+            )
+
+            description = DescriptionExtractor._remove_connectors(
+                description,
+            )
+
+            description = DescriptionExtractor._remove_articles(
+                description,
+            )
+
+            description = DescriptionExtractor._clean_spaces(
+                description,
+            )
+
+            return description.title()
 
         # ---------------------------------------------------
-        # Registrar gastos / ingresos
+        # Flujo general
         # ---------------------------------------------------
 
-        text = re.sub(
-            r"^(gast[eé]|pagu[eé]|compr[eé]|abon[eé]|transfer[ií]|recib[ií]|gan[eé]|ingres[eé]|deposit[eé])\s+",
-            "",
+        text = DescriptionExtractor._remove_verbs(
             text,
         )
 
-        # Eliminar montos
-        text = re.sub(
-            r"\$?[\d\.,]+",
-            "",
+        text = DescriptionExtractor._remove_amounts(
             text,
         )
 
-        # Eliminar palabras comunes de montos
-        text = re.sub(
-            r"\b(mil|lucas?)\b",
-            "",
+        text = DescriptionExtractor._remove_connectors(
             text,
         )
 
-        # Limpiar espacios
-        text = re.sub(
-            r"\s+",
-            " ",
+        text = DescriptionExtractor._remove_articles(
             text,
-        ).strip()
+        )
+
+        text = DescriptionExtractor._clean_spaces(
+            text,
+        )
+
+        # Si quedó vacío, devolver una descripción genérica
+        if not text:
+            return "Ingreso"
 
         return text.title()
