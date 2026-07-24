@@ -18,7 +18,7 @@ class MessageService:
         amount = AmountExtractor.extract(
             message,
         )
-        
+
         category = CategoryClassifier.detect(
             message,
         )
@@ -37,10 +37,11 @@ class MessageService:
 
         if query_type:
             intent = Intent.QUERY
-        else:
-            intent = IntentClassifier.detect(
-                message,
-            )
+
+        print("Mensaje:", message)
+        print("Intent:", intent)
+        print("Query:", query_type)
+        print("Descripción:", description)
 
         return CommandRouter.route(
             session=session,

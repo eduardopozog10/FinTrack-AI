@@ -8,6 +8,8 @@ from app.services.income_service import IncomeService
 from app.services.balance_service import BalanceService
 from app.services.list_transactions_service import ListTransactionsService
 from app.services.query_service import QueryService
+from app.services.update_transaction_service import UpdateTransactionService
+from app.services.delete_transaction_service import DeleteTransactionService
 
 class CommandRouter:
 
@@ -62,6 +64,19 @@ class CommandRouter:
                     category=category,
                     transaction_type=TransactionType.INCOME,
                 )
+
+        if intent == Intent.UPDATE:
+            return UpdateTransactionService.process(
+                session=session,
+                description=description,
+                amount=amount,
+            )
+
+        if intent == Intent.DELETE:
+            return DeleteTransactionService.process(
+                session=session,
+                description=description,
+            )
 
         return {
             "message": "Comando aún no implementado.",

@@ -7,20 +7,32 @@ class QueryClassifier:
 
         text = message.lower()
 
+        # Si no parece una pregunta, no es una consulta
+        if not any(word in text for word in [
+            "cuánto",
+            "cuanto",
+            "cuál",
+            "cual",
+            "total",
+        ]):
+            return None
+
+        # Consulta de gastos
         if any(word in text for word in [
-            "gasté",
-            "gaste",
-            "gasto",
+            "gast",
+            "pag",
+            "compr",
+            "cost",
         ]):
             return "TOTAL_EXPENSE"
 
+        # Consulta de ingresos
         if any(word in text for word in [
-            "gané",
-            "gane",
-            "ingresé",
-            "ingrese",
-            "recibí",
-            "recibi",
+            "gan",
+            "ingres",
+            "recib",
+            "cobr",
+            "deposit",
         ]):
             return "TOTAL_INCOME"
 

@@ -16,4 +16,8 @@ class Intent:
 
     QUERY = "query"
 
+    UPDATE = "update"
+    
+    DELETE = "delete"
+
     UNKNOWN = "unknown"
