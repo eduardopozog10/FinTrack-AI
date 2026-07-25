@@ -1,29 +1,25 @@
 from sqlmodel import Session
 
-from app.constants.transaction_type import TransactionType
-
-from app.services.query_service import QueryService
-from app.services.today_expense_service import TodayExpenseService
-from app.services.month_expense_service import MonthExpenseService
-from app.services.month_income_service import MonthIncomeService
 from app.services.max_expense_service import MaxExpenseService
 from app.services.max_income_service import MaxIncomeService
 from app.services.last_expense_service import LastExpenseService
 from app.services.last_income_service import LastIncomeService
-
+from app.services.universal_query_service import UniversalQueryService
 
 class QueryRouter:
 
     @staticmethod
     def route(
         session: Session,
-        query_type: str,
-        category: str,
+        query_filter,
     ):
 
+        query_type = query_filter.action
+
         if query_type == "TODAY_EXPENSE":
-            return TodayExpenseService.process(
+            return UniversalQueryService.process(
                 session=session,
+                query_filter=query_filter,
             )
 
         if query_type == "MONTH_EXPENSE":
@@ -57,17 +53,15 @@ class QueryRouter:
             )
 
         if query_type == "TOTAL_EXPENSE":
-            return QueryService.process(
+            return UniversalQueryService.process(
                 session=session,
-                category=category,
-                transaction_type=TransactionType.EXPENSE,
+                query_filter=query_filter,
             )
 
         if query_type == "TOTAL_INCOME":
-            return QueryService.process(
+            return UniversalQueryService.process(
                 session=session,
-                category=category,
-                transaction_type=TransactionType.INCOME,
+                query_filter=query_filter,
             )
 
         return {

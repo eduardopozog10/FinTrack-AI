@@ -17,7 +17,7 @@ class CommandRouter:
     def route(
         session: Session,
         intent: Intent,
-        query_type: str,
+        query_filter,
         amount: float,
         category: str,
         description: str,
@@ -52,8 +52,7 @@ class CommandRouter:
         if intent == Intent.QUERY:
             return QueryRouter.route(
                 session=session,
-                query_type=query_type,
-                category=category,
+                query_filter=query_filter,
             )
 
         if intent == Intent.UPDATE:

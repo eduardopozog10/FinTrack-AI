@@ -80,7 +80,7 @@ class MessageService:
         return CommandRouter.route(
             session=session,
             intent=intent,
-            query_type=query_type,
+            query_filter=query_filter,
             amount=amount,
             category=category,
             description=description,

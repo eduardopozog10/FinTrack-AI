@@ -8,6 +8,11 @@ class QueryClassifier:
         "cuanto pag",
         "cuánto compr",
         "cuanto compr",
+
+        "cuánto he gastado",
+        "cuanto he gastado",
+        "he gastado",
+        "llevo gastado",
     ]
 
     TOTAL_INCOME_PATTERNS = [
@@ -19,8 +24,13 @@ class QueryClassifier:
         "cuanto recib",
         "cuánto cobr",
         "cuanto cobr",
-    ]
 
+        "cuánto he ganado",
+        "cuanto he ganado",
+        "he ganado",
+        "llevo ganado",
+    ]
+    
     TODAY_EXPENSE_PATTERNS = [
         "gasté hoy",
         "gaste hoy",
