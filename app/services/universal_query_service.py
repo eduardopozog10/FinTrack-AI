@@ -90,6 +90,88 @@ class UniversalQueryService:
                 key: total or 0,
             }
 
+        # ----------------------------
+        # Máximos
+        # ----------------------------
+
+        if query_filter.action in [
+            "MAX_EXPENSE",
+            "MAX_INCOME",
+        ]:
+
+            transaction = session.exec(
+                select(Transaction)
+                .where(*filters)
+                .order_by(
+                    Transaction.amount.desc(),
+                )
+            ).first()
+
+            if transaction is None:
+
+                message = {
+                    "MAX_EXPENSE": "No existen gastos registrados.",
+                    "MAX_INCOME": "No existen ingresos registrados.",
+                }[query_filter.action]
+
+                return {
+                    "message": message,
+                }
+
+            key = {
+                "MAX_EXPENSE": "max_expense",
+                "MAX_INCOME": "max_income",
+            }[query_filter.action]
+
+            return {
+                key: {
+                    "description": transaction.description,
+                    "amount": transaction.amount,
+                    "category": transaction.category,
+                }
+            }
+
+        # ----------------------------
+        # Últimos movimientos
+        # ----------------------------
+
+        if query_filter.action in [
+            "LAST_EXPENSE",
+            "LAST_INCOME",
+        ]:
+
+            transaction = session.exec(
+                select(Transaction)
+                .where(*filters)
+                .order_by(
+                    Transaction.created_at.desc(),
+                )
+            ).first()
+
+            if transaction is None:
+
+                message = {
+                    "LAST_EXPENSE": "No existen gastos registrados.",
+                    "LAST_INCOME": "No existen ingresos registrados.",
+                }[query_filter.action]
+
+                return {
+                    "message": message,
+                }
+
+            key = {
+                "LAST_EXPENSE": "last_expense",
+                "LAST_INCOME": "last_income",
+            }[query_filter.action]
+
+            return {
+                key: {
+                    "description": transaction.description,
+                    "amount": transaction.amount,
+                    "category": transaction.category,
+                }
+            }
+
         return {
             "message": "Acción aún no implementada.",
             "action": query_filter.action,

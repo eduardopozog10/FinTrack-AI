@@ -85,6 +85,17 @@ class QueryClassifier:
     ]
 
     LAST_EXPENSE_PATTERNS = [
+        "último gasto",
+        "ultimo gasto",
+
+        "mi último gasto",
+        "mi ultimo gasto",
+
+        "cuál fue mi último gasto",
+        "cual fue mi ultimo gasto",
+
+        "cuál fue el último gasto",
+        "cual fue el ultimo gasto",
         "último pago",
         "ultimo pago",
 
@@ -110,6 +121,14 @@ class QueryClassifier:
     ]
 
     LAST_INCOME_PATTERNS = [
+    "mi último ingreso",
+    "mi ultimo ingreso",
+
+    "cuál fue mi último ingreso",
+    "cual fue mi ultimo ingreso",
+
+    "cuál fue el último ingreso",
+    "cual fue el ultimo ingreso",
     "último ingreso",
     "ultimo ingreso",
 

@@ -1,9 +1,5 @@
 from sqlmodel import Session
 
-from app.services.max_expense_service import MaxExpenseService
-from app.services.max_income_service import MaxIncomeService
-from app.services.last_expense_service import LastExpenseService
-from app.services.last_income_service import LastIncomeService
 from app.services.universal_query_service import UniversalQueryService
 
 class QueryRouter:
@@ -33,23 +29,27 @@ class QueryRouter:
             )
 
         if query_type == "MAX_EXPENSE":
-            return MaxExpenseService.process(
+            return UniversalQueryService.process(
                 session=session,
+                query_filter=query_filter,
             )
 
         if query_type == "MAX_INCOME":
-            return MaxIncomeService.process(
+            return UniversalQueryService.process(
                 session=session,
+                query_filter=query_filter,
             )
 
         if query_type == "LAST_EXPENSE":
-            return LastExpenseService.process(
+            return UniversalQueryService.process(
                 session=session,
+                query_filter=query_filter,
             )
 
         if query_type == "LAST_INCOME":
-            return LastIncomeService.process(
+            return UniversalQueryService.process(
                 session=session,
+                query_filter=query_filter,
             )
 
         if query_type == "TOTAL_EXPENSE":
