@@ -10,8 +10,7 @@ from app.services.description_extractor import DescriptionExtractor
 from app.services.intent_classifier import IntentClassifier
 from app.services.query_classifier import QueryClassifier
 from app.services.period_classifier import PeriodClassifier
-from app.services.query_filter_builder import QueryFilterBuilder
-
+from app.services.transaction_filter_builder import TransactionFilterBuilder
 
 class MessageService:
 
@@ -62,7 +61,7 @@ class MessageService:
 
         if query_type:
 
-            query_filter = QueryFilterBuilder.build(
+            query_filter = TransactionFilterBuilder.build(
                 query_type=query_type,
                 transaction_type=transaction_type,
                 category=category,
