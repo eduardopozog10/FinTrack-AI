@@ -1,12 +1,17 @@
 from sqlmodel import Session
 
 from app.constants.intents import Intent
+from app.constants.transaction_type import TransactionType
+
 from app.services.amount_extractor import AmountExtractor
 from app.services.category_classifier import CategoryClassifier
 from app.services.command_router import CommandRouter
 from app.services.description_extractor import DescriptionExtractor
 from app.services.intent_classifier import IntentClassifier
 from app.services.query_classifier import QueryClassifier
+from app.services.period_classifier import PeriodClassifier
+from app.services.query_filter_builder import QueryFilterBuilder
+
 
 class MessageService:
 
@@ -15,6 +20,7 @@ class MessageService:
         session: Session,
         message: str,
     ):
+
         amount = AmountExtractor.extract(
             message,
         )
@@ -35,15 +41,42 @@ class MessageService:
             message,
         )
 
+        period = PeriodClassifier.detect(
+            message,
+        )
+
         if query_type:
             intent = Intent.QUERY
+
+        transaction_type = None
+
+        if query_type:
+
+            if "EXPENSE" in query_type:
+                transaction_type = TransactionType.EXPENSE
+
+            elif "INCOME" in query_type:
+                transaction_type = TransactionType.INCOME
+
+        query_filter = None
+
+        if query_type:
+
+            query_filter = QueryFilterBuilder.build(
+                query_type=query_type,
+                transaction_type=transaction_type,
+                category=category,
+                period=period,
+            )
 
         print("Mensaje:", message)
         print("Intent:", intent)
         print("Query:", query_type)
+        print("Periodo:", period)
         print("Descripción:", description)
         print("Monto:", amount)
-        
+        print("QueryFilter:", query_filter)
+
         return CommandRouter.route(
             session=session,
             intent=intent,

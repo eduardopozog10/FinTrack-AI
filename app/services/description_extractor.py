@@ -152,7 +152,7 @@ class DescriptionExtractor:
             r"(me pagaron|me depositaron|me transfirieron)\s+\$?[\d\.,]+",
             text,
         ):
-            return "Ingreso"
+            return ""
 
         # ---------------------------------------------------
         # Actualizar / Eliminar
@@ -269,6 +269,6 @@ class DescriptionExtractor:
 
         # Si quedó vacío, devolver una descripción genérica
         if not text:
-            return "Ingreso"
+            return ""
 
         return text.title()

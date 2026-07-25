@@ -1,20 +1,15 @@
 from sqlmodel import Session
 
 from app.constants.intents import Intent
-from app.constants.transaction_type import TransactionType
 
 from app.services.expense_service import ExpenseService
 from app.services.income_service import IncomeService
 from app.services.balance_service import BalanceService
 from app.services.list_transactions_service import ListTransactionsService
-from app.services.query_service import QueryService
 from app.services.update_transaction_service import UpdateTransactionService
 from app.services.delete_transaction_service import DeleteTransactionService
-from app.services.today_expense_service import TodayExpenseService
-from app.services.month_expense_service import MonthExpenseService
-from app.services.month_income_service import MonthIncomeService
-from app.services.max_expense_service import MaxExpenseService
-from app.services.max_income_service import MaxIncomeService
+from app.services.query_router import QueryRouter
+
 
 class CommandRouter:
 
@@ -55,45 +50,11 @@ class CommandRouter:
             )
 
         if intent == Intent.QUERY:
-
-            if query_type == "TODAY_EXPENSE":
-                return TodayExpenseService.process(
-                    session=session,
-                )
-
-            if query_type == "MONTH_EXPENSE":
-                return MonthExpenseService.process(
-                    session=session,
-                )
-
-            if query_type == "MONTH_INCOME":
-                return MonthIncomeService.process(
-                    session=session,
-                )
-
-            if query_type == "MAX_EXPENSE":
-                return MaxExpenseService.process(
-                    session=session,
-                )
-
-            if query_type == "MAX_INCOME":
-                return MaxIncomeService.process(
-                    session=session,
-                )
-
-            if query_type == "TOTAL_EXPENSE":
-                return QueryService.process(
-                    session=session,
-                    category=category,
-                    transaction_type=TransactionType.EXPENSE,
-                )
-
-            if query_type == "TOTAL_INCOME":
-                return QueryService.process(
-                    session=session,
-                    category=category,
-                    transaction_type=TransactionType.INCOME,
-                )
+            return QueryRouter.route(
+                session=session,
+                query_type=query_type,
+                category=category,
+            )
 
         if intent == Intent.UPDATE:
             return UpdateTransactionService.process(

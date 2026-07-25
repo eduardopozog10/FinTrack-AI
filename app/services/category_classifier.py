@@ -78,4 +78,4 @@ class CategoryClassifier:
         ]):
             return Category.SALARY
 
-        return Category.OTHER
+        return None

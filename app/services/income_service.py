@@ -1,5 +1,6 @@
 from sqlmodel import Session
 
+from app.constants.categories import Category
 from app.models.transaction import TransactionType
 from app.services.transaction_service import TransactionService
 
@@ -13,6 +14,12 @@ class IncomeService:
         category: str,
         description: str,
     ):
+
+        if category is None:
+            category = Category.OTHER
+
+        if not description:
+            description = "Ingreso"
 
         return TransactionService.create_from_message(
             session=session,

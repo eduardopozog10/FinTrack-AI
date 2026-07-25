@@ -74,6 +74,61 @@ class QueryClassifier:
     "deposito mas grande",
     ]
 
+    LAST_EXPENSE_PATTERNS = [
+        "último pago",
+        "ultimo pago",
+
+        "qué compré recién",
+        "que compré recién",
+        "qué compre recién",
+        "que compre recién",
+
+        "qué compré recien",
+        "que compré recien",
+        "qué compre recien",
+        "que compre recien",
+
+        "qué pagué recién",
+        "que pagué recién",
+        "qué pague recién",
+        "que pague recién",
+
+        "qué pagué recien",
+        "que pagué recien",
+        "qué pague recien",
+        "que pague recien",
+    ]
+
+    LAST_INCOME_PATTERNS = [
+    "último ingreso",
+    "ultimo ingreso",
+
+    "último sueldo",
+    "ultimo sueldo",
+
+    "último depósito",
+    "ultimo deposito",
+
+    "qué recibí recién",
+    "que recibí recién",
+    "qué recibi recién",
+    "que recibi recién",
+
+    "qué recibí recien",
+    "que recibí recien",
+    "qué recibi recien",
+    "que recibi recien",
+
+    "qué me pagaron",
+    "que me pagaron",
+
+    "qué depositaron",
+    "que depositaron",
+
+    "qué me depositaron",
+    "que me depositaron",
+    ]
+
     @staticmethod
     def detect(
         message: str,
@@ -95,6 +150,12 @@ class QueryClassifier:
 
         if any(pattern in text for pattern in QueryClassifier.MAX_INCOME_PATTERNS):
             return "MAX_INCOME" 
+
+        if any(pattern in text for pattern in QueryClassifier.LAST_EXPENSE_PATTERNS):
+            return "LAST_EXPENSE"
+
+        if any(pattern in text for pattern in QueryClassifier.LAST_INCOME_PATTERNS):
+            return "LAST_INCOME"
 
         if any(pattern in text for pattern in QueryClassifier.TOTAL_INCOME_PATTERNS):
             return "TOTAL_INCOME"
