@@ -3,6 +3,8 @@ from app.schemas.query_filter import QueryFilter
 
 from app.constants.transaction_type import TransactionType
 
+from app.services.transaction_filter_builder import TransactionFilterBuilder
+
 
 class AIQueryMapper:
 
