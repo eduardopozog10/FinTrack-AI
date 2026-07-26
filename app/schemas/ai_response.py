@@ -1,12 +1,12 @@
-from typing import Optional
+from typing import Any
 
 from pydantic import BaseModel
 
 
 class AIResponse(BaseModel):
-    intencion_usuario: str
-    tipo_transaccion: Optional[str] = None
-    monto: Optional[float] = None
-    categoria_probable: Optional[str] = None
-    descripcion: Optional[str] = None
-    fecha_mencionada: Optional[str] = None
+
+    success: bool
+
+    message: str
+
+    data: Any | None = None

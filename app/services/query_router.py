@@ -19,15 +19,16 @@ class QueryRouter:
             )
 
         if query_type == "MONTH_EXPENSE":
-            return MonthExpenseService.process(
+            return UniversalQueryService.process(
                 session=session,
+                query_filter=query_filter,
             )
 
         if query_type == "MONTH_INCOME":
-            return MonthIncomeService.process(
+            return UniversalQueryService.process(
                 session=session,
+                query_filter=query_filter,
             )
-
         if query_type == "MAX_EXPENSE":
             return UniversalQueryService.process(
                 session=session,

@@ -1,6 +1,9 @@
 from app.constants.intents import Intent
-from app.schemas.ai_analysis import AIAnalysis
 
+from app.schemas.ai_analysis import AIAnalysis
+from app.schemas.ai_command import AICommand
+
+from app.services.ai_query_mapper import AIQueryMapper
 
 class AICommandAdapter:
 
@@ -24,10 +27,15 @@ class AICommandAdapter:
         ]:
             intent = Intent.QUERY
 
-        return {
-            "intent": intent,
-            "query_filter": None,
-            "amount": None,
-            "category": None,
-            "description": None,
-        }
+        query_filter = None
+
+        if intent == Intent.QUERY:
+            query_filter = AIQueryMapper.build(analysis)
+
+        return AICommand(
+            intent=intent,
+            query_filter=query_filter,
+            amount=analysis.monto,
+            category=analysis.categoria_probable,
+            description=analysis.descripcion,
+        )

@@ -4,6 +4,7 @@ from google import genai
 
 from app.core.config import settings
 from app.schemas.ai_analysis import AIAnalysis
+from app.schemas.conversation_context import ConversationContext
 from app.services.intent_mapper import IntentMapper
 
 
@@ -243,7 +244,9 @@ Debes responder exactamente con esta estructura:
         )
 
         if not response.text:
-            raise ValueError("Gemini no devolvió ninguna respuesta.")
+            raise ValueError(
+                "Gemini no devolvió ninguna respuesta."
+            )
 
         try:
             data = json.loads(response.text)
@@ -263,3 +266,69 @@ Debes responder exactamente con esta estructura:
         data["backend_action"] = IntentMapper.map(intent)
 
         return AIAnalysis.model_validate(data)
+
+    @staticmethod
+    def generate_response(
+        context: ConversationContext,
+    ) -> str:
+
+        prompt = f"""
+Eres FinTrack AI.
+
+Tu trabajo consiste únicamente en comunicar al usuario el resultado que entregó el backend.
+
+No tomas decisiones.
+
+No ejecutas lógica de negocio.
+
+No inventas información.
+
+Nunca cambies montos.
+
+Nunca cambies categorías.
+
+Nunca digas que una operación fue exitosa si success es False.
+
+Responde de forma breve, natural y cercana.
+
+==========================
+MENSAJE ORIGINAL
+==========================
+
+{context.user_message}
+
+==========================
+RESULTADO DEL BACKEND
+==========================
+
+Acción:
+{context.action}
+
+Éxito:
+{context.success}
+
+Datos:
+{context.data}
+
+==========================
+REGLAS
+==========================
+
+- Usa únicamente la información proporcionada.
+- No inventes datos.
+- No expliques procesos internos.
+- Responde en español.
+- Devuelve únicamente el mensaje para el usuario.
+"""
+
+        response = GeminiService.client.models.generate_content(
+            model="gemini-3.5-flash",
+            contents=prompt,
+        )
+
+        if not response.text:
+            raise ValueError(
+                "Gemini no devolvió ninguna respuesta."
+            )
+
+        return response.text.strip()
