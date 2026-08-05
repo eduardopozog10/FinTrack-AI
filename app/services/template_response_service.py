@@ -16,12 +16,38 @@ class TemplateResponseService:
 
         if context.action == "expense_created":
 
-            return (
+            response = (
                 f"💸 ¡Listo! Registré un gasto de "
                 f"${data.amount:,.0f} en "
                 f"{data.description}.\n\n"
                 f"Categoría: {data.category.capitalize()}."
             )
+
+            budget = None
+
+            if context.metadata:
+                budget = context.metadata.get("budget")
+
+            if budget:
+
+                response += (
+                    "\n\n"
+                    "📊 Presupuesto\n\n"
+                    f"Utilizado: ${budget['spent']:,.0f} de "
+                    f"${budget['budget']:,.0f} "
+                    f"({budget['percentage']}%)\n"
+                    f"Disponible: ${budget['remaining']:,.0f}"
+                )
+
+                if budget["exceeded"]:
+
+                    response += (
+                        "\n\n"
+                        f"⚠️ Has superado el presupuesto por "
+                        f"${abs(budget['remaining']):,.0f}."
+                    )
+
+            return response
 
         # ==========================================
         # INGRESO CREADO

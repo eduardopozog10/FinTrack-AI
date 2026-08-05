@@ -5,6 +5,7 @@ from app.models.transaction import TransactionType
 from app.schemas.ai_command import AICommand
 from app.schemas.operation_result import OperationResult
 from app.services.transaction_service import TransactionService
+from app.services.budget_status_service import BudgetStatusService
 
 
 class ExpenseService:
@@ -33,8 +34,16 @@ class ExpenseService:
             transaction_type=TransactionType.EXPENSE,
         )
 
+        budget_status = BudgetStatusService.get_status(
+            session=session,
+            category=category,
+        )
+
         return OperationResult(
             success=True,
             action="expense_created",
             data=transaction,
+            metadata={
+                "budget": budget_status,
+            },
         )
