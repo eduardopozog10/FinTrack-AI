@@ -65,6 +65,12 @@ class QueryRouter:
                 query_filter=query_filter,
             )
 
+        if query_type == "EXPENSE_HISTORY":
+            return UniversalQueryService.process(
+                session=session,
+                query_filter=query_filter,
+            )
+
         return {
             "message": "Consulta no implementada.",
             "query": query_type,

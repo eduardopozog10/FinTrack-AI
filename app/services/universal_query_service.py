@@ -172,6 +172,30 @@ class UniversalQueryService:
                 }
             }
 
+        # ----------------------------
+        # Historial de gastos
+        # ----------------------------
+
+        if query_filter.action == "EXPENSE_HISTORY":
+
+            transactions = session.exec(
+                select(Transaction)
+                .where(*filters)
+                .order_by(Transaction.created_at.desc())
+            ).all()
+
+            return {
+                "expense_history": [
+                    {
+                        "description": transaction.description,
+                        "amount": transaction.amount,
+                        "category": transaction.category,
+                        "created_at": transaction.created_at,
+                    }
+                    for transaction in transactions
+                ]
+            }
+
         return {
             "message": "Acción aún no implementada.",
             "action": query_filter.action,

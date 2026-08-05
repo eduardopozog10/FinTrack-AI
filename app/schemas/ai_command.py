@@ -14,3 +14,11 @@ class AICommand(BaseModel):
     category: str | None = None
 
     description: str | None = None
+
+    transaction_type: str | None = None
+
+    update_field: str | None = None
+
+    update_value: str | float | None = None
+
+    transaction_reference: str | None = None

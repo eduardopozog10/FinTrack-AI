@@ -1,4 +1,5 @@
 import json
+import time
 
 from google import genai
 
@@ -10,238 +11,389 @@ from app.services.intent_mapper import IntentMapper
 
 class GeminiService:
 
+    MODEL = "gemini-3.5-flash-lite" 
+
     client = genai.Client(
         api_key=settings.gemini_api_key,
     )
 
     @staticmethod
-    def analyze_message(message: str) -> AIAnalysis:
+    def analyze_message(
+        message: str,
+        history: list | None = None,
+    ) -> AIAnalysis:
+
+        print("\n========== Gemini analyze ==========")
+        print(f"Mensaje: {message}")
+        print(f"History: {history}")
+
+        history_text = "\n".join(
+            f"{item['role']}: {item['message']}"
+            for item in (history or [])
+        )
 
         prompt = f"""
-Eres un asistente especializado en interpretar mensajes financieros de una aplicación de control de gastos personales.
+Eres un asistente especializado en interpretar mensajes financieros.
 
-Tu única tarea es analizar el mensaje del usuario y devolver un JSON válido con la información extraída.
+Analiza el mensaje del usuario y devuelve únicamente un JSON válido.
 
-Mensaje del usuario:
+========================================
+MENSAJE DEL USUARIO
+========================================
+
 {message}
 
-========================
+========================================
+HISTORIAL
+========================================
+
+{history_text}
+
+========================================
+USO DEL HISTORIAL
+========================================
+
+Utiliza el historial únicamente para resolver referencias como:
+
+- el último
+- ese gasto
+- ese ingreso
+- fue ayer
+- corrígelo
+- cámbialo
+- era sueldo
+
+Si el historial no aporta contexto suficiente, ignóralo.
+
+========================================
 INTENCIONES DISPONIBLES
-========================
+========================================
 
-Debes utilizar EXCLUSIVAMENTE una de estas intenciones:
+registrar_gasto
+registrar_ingreso
+consultar_balance
+consultar_gastos
+consultar_ingresos
+consultar_categoria
+actualizar_transaccion
+crear_presupuesto
+desconocida
 
-- registrar_gasto
-    El usuario quiere registrar un gasto.
-
-- registrar_ingreso
-    El usuario quiere registrar un ingreso.
-
-- consultar_balance
-    El usuario quiere conocer su saldo o balance.
-
-- consultar_gastos
-    El usuario quiere consultar uno o más gastos.
-
-- consultar_ingresos
-    El usuario quiere consultar uno o más ingresos.
-
-- consultar_categoria
-    El usuario quiere consultar gastos de una categoría específica.
-
-- desconocida
-    Cuando no sea posible identificar la intención.
-
-========================
-QUERY_TYPE
-========================
-
-Si la intención NO corresponde a una consulta, utiliza:
-
-null
-
-Si la intención corresponde a una consulta, utiliza EXCLUSIVAMENTE uno de los siguientes valores:
+========================================
+QUERY TYPES
+========================================
 
 TODAY_EXPENSE
-    Ejemplos:
-    - ¿Cuánto gasté hoy?
-    - Gastos de hoy
-
 MONTH_EXPENSE
-    Ejemplos:
-    - ¿Cuánto gasté este mes?
-    - Gastos del mes
-
 MONTH_INCOME
-    Ejemplos:
-    - ¿Cuánto gané este mes?
-    - Ingresos del mes
-
-MAX_EXPENSE
-    Ejemplos:
-    - ¿Cuál fue mi gasto más grande?
-    - Mayor gasto
-
-MAX_INCOME
-    Ejemplos:
-    - ¿Cuál fue mi ingreso más grande?
-    - Mayor ingreso
-
-LAST_EXPENSE
-    Ejemplos:
-    - ¿Cuál fue mi último gasto?
-    - Último gasto
-
-LAST_INCOME
-    Ejemplos:
-    - ¿Cuál fue mi último ingreso?
-    - Último ingreso
-
 TOTAL_EXPENSE
-    Ejemplos:
-    - ¿Cuánto he gastado en total?
-    - Total gastado
-
 TOTAL_INCOME
-    Ejemplos:
-    - ¿Cuánto he ganado en total?
-    - Total de ingresos
+MAX_EXPENSE
+MAX_INCOME
+LAST_EXPENSE
+LAST_INCOME
+EXPENSE_HISTORY
 
-========================
-TIPO DE TRANSACCIÓN
-========================
+Si no corresponde a una consulta utiliza null.
 
-Utiliza únicamente:
-
-- gasto
-- ingreso
-- null
-
-Si la intención no registra ni consulta una transacción específica, utiliza null.
-
-========================
-MONTO
-========================
-
-Extrae únicamente el valor numérico.
-
-Ejemplos:
-
-"Gasté $12.500"
-→ 12500
-
-"Recibí 350000 pesos"
-→ 350000
-
-Si no existe monto:
-
-null
-
-========================
-CATEGORÍA
-========================
-
-Detecta la categoría más probable.
-
-Ejemplos:
-
-Starbucks → cafetería
-
-Uber → transporte
-
-Copec → combustible
-
-Supermercado → supermercado
-
-McDonald's → comida
-
-Si no puede determinarse:
-
-null
-
-========================
-DESCRIPCIÓN
-========================
-
-Extrae una descripción corta de la transacción.
-
-Ejemplos:
-
-"Gasté 5000 en Starbucks"
-
-→ "Starbucks"
-
-"Compré pan"
-
-→ "pan"
-
-Si no existe:
-
-null
-
-========================
-FECHA
-========================
-
-Extrae únicamente la referencia temporal mencionada por el usuario.
-
-Ejemplos:
-
-"hoy"
-
-"ayer"
-
-"este mes"
-
-"la semana pasada"
-
-"enero"
-
-Si el usuario no menciona una fecha:
-
-null
-
-========================
+========================================
 REGLAS GENERALES
-========================
+========================================
 
-- Nunca inventes información que no esté presente en el mensaje.
-- Si un dato no puede determinarse con seguridad, utiliza null.
-- El monto siempre debe ser un número sin símbolos de moneda.
-- La descripción debe ser breve.
-- La categoría debe ser la más probable según el contexto.
-- El query_type solo debe tener un valor cuando la intención sea una consulta.
-- Si existen varias interpretaciones posibles, elige la más probable según el contexto del mensaje.
+- Nunca inventes datos.
+- Usa el historial únicamente cuando sea necesario.
+- Si el historial permite completar información, reutilízala.
+- Si un dato no existe utiliza null.
+- El monto siempre debe ser numérico.
+- Devuelve únicamente JSON válido.
+- Nunca escribas explicaciones.
+- Nunca escribas texto adicional.
+- Nunca utilices Markdown.
+- Nunca utilices ```json.
 
-========================
+========================================
 FORMATO DE RESPUESTA
-========================
+========================================
 
-Responde únicamente con un JSON válido.
-
-No agregues explicaciones.
-
-No escribas texto adicional.
-
-No uses bloques ```json.
-
-Debes responder exactamente con esta estructura:
+Devuelve SIEMPRE un único objeto JSON exactamente con esta estructura:
 
 {{
-    "intencion_usuario": "registrar_gasto",
+    "intencion_usuario": "",
     "query_type": null,
-    "tipo_transaccion": "gasto",
-    "monto": 12500,
-    "categoria_probable": "cafetería",
-    "descripcion": "Starbucks",
-    "fecha_mencionada": "ayer"
+    "tipo_transaccion": null,
+    "monto": null,
+    "categoria_probable": null,
+    "descripcion": null,
+    "fecha_mencionada": null,
+    "campo_actualizar": null,
+    "nuevo_valor": null,
+    "referencia_transaccion": null
+}}
+
+========================================
+REGLAS PARA ACTUALIZAR TRANSACCIONES
+========================================
+
+Si el usuario desea corregir o modificar una transacción existente utiliza:
+
+intencion_usuario = actualizar_transaccion
+
+Completa además:
+
+campo_actualizar
+
+Valores posibles:
+
+amount
+description
+category
+created_at
+
+nuevo_valor
+
+Debe contener el nuevo valor indicado por el usuario.
+
+referencia_transaccion
+
+Por ahora utiliza siempre:
+
+ultima
+
+========================================
+REGLAS PARA PRESUPUESTOS
+========================================
+
+Si el usuario desea crear o modificar un presupuesto mensual utiliza:
+
+intencion_usuario = crear_presupuesto
+
+Completa además:
+
+monto
+
+categoria_probable
+
+========================================
+EJEMPLOS
+========================================
+
+Usuario:
+
+Gasté 12000 en Starbucks
+
+Respuesta:
+
+{{
+    "intencion_usuario":"registrar_gasto",
+    "query_type":null,
+    "tipo_transaccion":"gasto",
+    "monto":12000,
+    "categoria_probable":"cafetería",
+    "descripcion":"Starbucks",
+    "fecha_mencionada":null,
+    "campo_actualizar":null,
+    "nuevo_valor":null,
+    "referencia_transaccion":null
+}}
+
+------------------------------------------------
+
+Usuario:
+
+Recibí 850000 de sueldo
+
+Respuesta:
+
+{{
+    "intencion_usuario":"registrar_ingreso",
+    "query_type":null,
+    "tipo_transaccion":"ingreso",
+    "monto":850000,
+    "categoria_probable":"sueldo",
+    "descripcion":"sueldo",
+    "fecha_mencionada":null,
+    "campo_actualizar":null,
+    "nuevo_valor":null,
+    "referencia_transaccion":null
+}}
+
+------------------------------------------------
+
+Usuario:
+
+¿Cuánto gasté este mes?
+
+Respuesta:
+
+{{
+    "intencion_usuario":"consultar_gastos",
+    "query_type":"MONTH_EXPENSE",
+    "tipo_transaccion":"gasto",
+    "monto":null,
+    "categoria_probable":null,
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":null,
+    "nuevo_valor":null,
+    "referencia_transaccion":null
+}}
+
+------------------------------------------------
+
+Usuario:
+
+Fue ayer
+
+Respuesta:
+
+{{
+    "intencion_usuario":"actualizar_transaccion",
+    "query_type":null,
+    "tipo_transaccion":null,
+    "monto":null,
+    "categoria_probable":null,
+    "descripcion":null,
+    "fecha_mencionada":"ayer",
+    "campo_actualizar":"created_at",
+    "nuevo_valor":"ayer",
+    "referencia_transaccion":"ultima"
+}}
+
+------------------------------------------------
+
+Usuario:
+
+Era sueldo
+
+Respuesta:
+
+{{
+    "intencion_usuario":"actualizar_transaccion",
+    "query_type":null,
+    "tipo_transaccion":null,
+    "monto":null,
+    "categoria_probable":null,
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":"description",
+    "nuevo_valor":"sueldo",
+    "referencia_transaccion":"ultima"
+}}
+
+------------------------------------------------
+
+Usuario:
+
+En realidad fueron 18000
+
+Respuesta:
+
+{{
+    "intencion_usuario":"actualizar_transaccion",
+    "query_type":null,
+    "tipo_transaccion":null,
+    "monto":null,
+    "categoria_probable":null,
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":"amount",
+    "nuevo_valor":18000,
+    "referencia_transaccion":"ultima"
+}}
+
+------------------------------------------------
+
+Usuario:
+
+Ponlo en supermercado
+
+Respuesta:
+
+{{
+    "intencion_usuario":"actualizar_transaccion",
+    "query_type":null,
+    "tipo_transaccion":null,
+    "monto":null,
+    "categoria_probable":null,
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":"category",
+    "nuevo_valor":"supermercado",
+    "referencia_transaccion":"ultima"
+}}
+
+------------------------------------------------
+
+Usuario:
+
+Mi presupuesto para comida es 250000
+
+Respuesta:
+
+{{
+    "intencion_usuario":"crear_presupuesto",
+    "query_type":null,
+    "tipo_transaccion":null,
+    "monto":250000,
+    "categoria_probable":"comida",
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":null,
+    "nuevo_valor":null,
+    "referencia_transaccion":null
+}}
+
+------------------------------------------------
+
+Usuario:
+
+Pon 80000 para ocio
+
+Respuesta:
+
+{{
+    "intencion_usuario":"crear_presupuesto",
+    "query_type":null,
+    "tipo_transaccion":null,
+    "monto":80000,
+    "categoria_probable":"ocio",
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":null,
+    "nuevo_valor":null,
+    "referencia_transaccion":null
+}}
+
+------------------------------------------------
+
+Usuario:
+
+Quiero gastar máximo 150000 en transporte
+
+Respuesta:
+
+{{
+    "intencion_usuario":"crear_presupuesto",
+    "query_type":null,
+    "tipo_transaccion":null,
+    "monto":150000,
+    "categoria_probable":"transporte",
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":null,
+    "nuevo_valor":null,
+    "referencia_transaccion":null
 }}
 """
+        print("Enviando prompt a Gemini...")
 
         response = GeminiService.client.models.generate_content(
-            model="gemini-3.5-flash",
+            model=GeminiService.MODEL,
             contents=prompt,
         )
+
+        print("Respuesta recibida")
+        print(response.text)
 
         if not response.text:
             raise ValueError(
@@ -272,59 +424,62 @@ Debes responder exactamente con esta estructura:
         context: ConversationContext,
     ) -> str:
 
+        print("========== Gemini response ==========")
+        print("Action:", context.action)
+
+
+        if hasattr(context.data, "model_dump"):
+            data = context.data.model_dump()
+
+        else:
+            data = context.data
+
+        data_json = json.dumps(
+            data,
+            ensure_ascii=False,
+            indent=2,
+            default=str,
+        )
+
         prompt = f"""
 Eres FinTrack AI.
 
-Tu trabajo consiste únicamente en comunicar al usuario el resultado que entregó el backend.
+Genera únicamente el mensaje que verá el usuario.
 
-No tomas decisiones.
+Usa exclusivamente la información entregada.
 
-No ejecutas lógica de negocio.
+Nunca inventes datos.
 
-No inventas información.
+Nunca modifiques la información entregada.
 
-Nunca cambies montos.
+No menciones procesos internos.
 
-Nunca cambies categorías.
+No menciones JSON.
 
-Nunca digas que una operación fue exitosa si success es False.
-
-Responde de forma breve, natural y cercana.
-
-==========================
-MENSAJE ORIGINAL
-==========================
-
-{context.user_message}
-
-==========================
-RESULTADO DEL BACKEND
-==========================
+Responde siempre en español.
 
 Acción:
 {context.action}
 
-Éxito:
-{context.success}
+Mensaje del usuario:
+{context.user_message}
 
 Datos:
-{context.data}
-
-==========================
-REGLAS
-==========================
-
-- Usa únicamente la información proporcionada.
-- No inventes datos.
-- No expliques procesos internos.
-- Responde en español.
-- Devuelve únicamente el mensaje para el usuario.
+{data_json}
 """
 
+        print("Enviando prompt de respuesta a Gemini...")
+
+        inicio = time.time()
+
         response = GeminiService.client.models.generate_content(
-            model="gemini-3.5-flash",
+            model=GeminiService.MODEL,
             contents=prompt,
         )
+
+        print(f"Tiempo Gemini: {time.time() - inicio:.2f}s")
+        print("Respuesta de Gemini:")
+        print(response.text)
 
         if not response.text:
             raise ValueError(

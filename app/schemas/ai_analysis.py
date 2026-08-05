@@ -10,3 +10,6 @@ class AIAnalysis(BaseModel):
     categoria_probable: str | None = None
     descripcion: str | None = None
     fecha_mencionada: str | None = None
+    campo_actualizar: str | None = None
+    nuevo_valor: str | float | None = None
+    referencia_transaccion: str | None = None

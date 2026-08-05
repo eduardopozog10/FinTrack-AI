@@ -11,13 +11,15 @@ class Intent:
     UPDATE_TRANSACTION = "update_transaction"
 
     DELETE_TRANSACTION = "delete_transaction"
-    
+
+    BUDGET = "budget"
+
     LIST = "list"
 
     QUERY = "query"
 
     UPDATE = "update"
-    
+
     DELETE = "delete"
 
     UNKNOWN = "unknown"

@@ -158,12 +158,31 @@ class QueryClassifier:
     "que me depositaron",
     ]
 
+    EXPENSE_HISTORY_PATTERNS = [
+    "historial de gastos",
+    "historial gastos",
+    "mis gastos",
+    "ver mis gastos",
+    "mostrar mis gastos",
+    "muéstrame mis gastos",
+    "muestrame mis gastos",
+    "lista de gastos",
+    "todos mis gastos",
+    ]
+
     @staticmethod
     def detect(
         message: str,
     ):
 
         text = message.lower()
+
+        if any(
+            pattern in text
+            for pattern in QueryClassifier.EXPENSE_HISTORY_PATTERNS
+        ):
+            return "EXPENSE_HISTORY"
+        
 
         if any(pattern in text for pattern in QueryClassifier.TODAY_EXPENSE_PATTERNS):
             return "TODAY_EXPENSE"

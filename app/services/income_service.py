@@ -2,6 +2,8 @@ from sqlmodel import Session
 
 from app.constants.categories import Category
 from app.models.transaction import TransactionType
+from app.schemas.ai_command import AICommand
+from app.schemas.operation_result import OperationResult
 from app.services.transaction_service import TransactionService
 
 
@@ -10,10 +12,12 @@ class IncomeService:
     @staticmethod
     def process(
         session: Session,
-        amount: float,
-        category: str,
-        description: str,
+        command: AICommand,
     ):
+
+        amount = command.amount
+        category = command.category
+        description = command.description
 
         if category is None:
             category = Category.OTHER
@@ -21,10 +25,16 @@ class IncomeService:
         if not description:
             description = "Ingreso"
 
-        return TransactionService.create_from_message(
+        transaction = TransactionService.create_from_message(
             session=session,
             amount=amount,
             category=category,
             description=description,
             transaction_type=TransactionType.INCOME,
+        )
+
+        return OperationResult(
+            success=True,
+            action="income_created",
+            data=transaction,
         )
