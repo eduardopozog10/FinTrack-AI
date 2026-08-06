@@ -3,6 +3,7 @@ from sqlmodel import Session
 from app.schemas.ai_command import AICommand
 from app.schemas.operation_result import OperationResult
 from app.services.budget_crud_service import BudgetCrudService
+from app.services.category_normalizer_service import CategoryNormalizerService
 
 
 class BudgetService:
@@ -15,7 +16,9 @@ class BudgetService:
 
         budget = BudgetCrudService.get_by_category(
             session=session,
-            category=command.category,
+            category = CategoryNormalizerService.normalize(
+                command.category
+            )
         )
 
         if budget is None:

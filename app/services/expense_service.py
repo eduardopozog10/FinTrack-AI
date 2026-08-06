@@ -6,6 +6,9 @@ from app.schemas.ai_command import AICommand
 from app.schemas.operation_result import OperationResult
 from app.services.transaction_service import TransactionService
 from app.services.budget_status_service import BudgetStatusService
+from app.services.category_normalizer_service import CategoryNormalizerService
+from app.events.event_bus import EventBus
+from app.events.expense_created_event import ExpenseCreatedEvent
 
 
 class ExpenseService:
@@ -17,14 +20,19 @@ class ExpenseService:
     ):
 
         amount = command.amount
-        category = command.category
+
+        category = CategoryNormalizerService.normalize(
+            command.category
+        )
+
         description = command.description
 
         if category is None:
             category = Category.OTHER
 
         if not description:
-            description = "Gasto"
+
+            description = category.capitalize()
 
         transaction = TransactionService.create_from_message(
             session=session,
@@ -34,16 +42,20 @@ class ExpenseService:
             transaction_type=TransactionType.EXPENSE,
         )
 
-        budget_status = BudgetStatusService.get_status(
-            session=session,
-            category=category,
+        metadata = {
+            "session": session,
+        }
+
+        event = ExpenseCreatedEvent(
+            transaction=transaction,
+            metadata=metadata,
         )
+
+        EventBus.dispatch(event)
 
         return OperationResult(
             success=True,
             action="expense_created",
             data=transaction,
-            metadata={
-                "budget": budget_status,
-            },
+            metadata=event.metadata,
         )
