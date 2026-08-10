@@ -24,9 +24,15 @@ class TemplateResponseService:
             )
 
             budget = None
+            budget_alert = None
 
             if context.metadata:
                 budget = context.metadata.get("budget")
+                budget_alert = context.metadata.get("budget_alert")
+
+            # ======================================
+            # ESTADO DEL PRESUPUESTO
+            # ======================================
 
             if budget:
 
@@ -35,17 +41,20 @@ class TemplateResponseService:
                     "📊 Presupuesto\n\n"
                     f"Utilizado: ${budget['spent']:,.0f} de "
                     f"${budget['budget']:,.0f} "
-                    f"({budget['percentage']}%)\n"
+                    f"({budget['percentage']:.1f}%)\n"
                     f"Disponible: ${budget['remaining']:,.0f}"
                 )
 
-                if budget["exceeded"]:
+            # ======================================
+            # ALERTA DEL PRESUPUESTO
+            # ======================================
 
-                    response += (
-                        "\n\n"
-                        f"⚠️ Has superado el presupuesto por "
-                        f"${abs(budget['remaining']):,.0f}."
-                    )
+            if budget_alert:
+
+                response += (
+                    "\n\n"
+                    f"{budget_alert['message']}"
+                )
 
             return response
 
@@ -101,9 +110,12 @@ class TemplateResponseService:
 
         if context.action == "transaction_deleted":
 
+            if not context.success:
+                return data["message"]
+
             return (
                 f"🗑️ Eliminé la transacción "
-                f"{data.description} correctamente."
+                f"{data['description']} correctamente."
             )
 
         # ==========================================
@@ -141,6 +153,113 @@ class TemplateResponseService:
                 f"✏️ Presupuesto actualizado para "
                 f"{data.category.capitalize()}.\n\n"
                 f"Nuevo monto: ${data.amount:,.0f}."
+            )
+
+        # ==========================================
+        # CONSULTAR PRESUPUESTO
+        # ==========================================
+
+        if context.action == "budget_status":
+
+            if not context.success:
+                return data["message"]
+
+            response = (
+                f"📊 Presupuesto de "
+                f"{data['category'].capitalize()}\n\n"
+                f"Presupuesto: ${data['budget']:,.0f}\n"
+                f"Utilizado: ${data['spent']:,.0f}\n"
+                f"Disponible: ${data['remaining']:,.0f}\n"
+                f"Progreso: {data['percentage']:.1f}%"
+            )
+
+            if data["exceeded"]:
+                response += (
+                    "\n\n"
+                    f"🚨 Has superado tu presupuesto por "
+                    f"${abs(data['remaining']):,.0f}."
+                )
+
+            elif data["percentage"] == 100:
+                response += (
+                    "\n\n"
+                    "🚨 Has utilizado el 100% de tu presupuesto."
+                )
+
+            elif data["percentage"] >= 80:
+                response += (
+                    "\n\n"
+                    f"⚠️ Ya utilizaste el "
+                    f"{data['percentage']:.1f}% de tu presupuesto."
+                )
+
+            elif data["percentage"] >= 50:
+                response += (
+                    "\n\n"
+                    f"💡 Ya utilizaste el "
+                    f"{data['percentage']:.1f}% de tu presupuesto."
+                )
+
+            return response
+
+        # ==========================================
+        # CONSULTAR TODOS LOS PRESUPUESTOS
+        # ==========================================
+
+        if context.action == "budget_status_all":
+
+            if not context.success:
+                return data["message"]
+
+            response = "📊 Tus presupuestos\n"
+
+            for budget in data:
+
+                response += (
+                    "\n"
+                    f"{budget['category'].capitalize()}\n"
+                    f"${budget['spent']:,.0f} de "
+                    f"${budget['budget']:,.0f} "
+                    f"({budget['percentage']:.1f}%)\n"
+                    f"Disponible: ${budget['remaining']:,.0f}\n"
+                )
+
+                if budget["exceeded"]:
+                    response += "🚨 Presupuesto superado\n"
+
+            return response.strip()
+
+        # ==========================================
+        # GASTOS DE HOY
+        # ==========================================
+
+        if context.action == "today_expense":
+
+            return (
+                f"💸 Hoy has gastado "
+                f"${data['today_expense']:,.0f}."
+            )
+
+        # ==========================================
+        # GASTOS DEL MES
+        # ==========================================
+
+        if context.action == "month_expense":
+
+            return (
+                f"💸 Este mes has gastado "
+                f"${data['month_expense']:,.0f}."
+            )
+
+        # ==========================================
+        # INGRESOS DEL MES
+        # ==========================================
+
+        if context.action == "month_income":
+
+            return (
+                f"💰 Este mes has recibido "
+                f"${data['month_income']:,.0f}."
             )
 
         # ==========================================

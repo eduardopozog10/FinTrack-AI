@@ -10,6 +10,12 @@ class Budget(SQLModel, table=True):
         primary_key=True,
     )
 
+    user_id: int | None = Field(
+        default=None,
+        foreign_key="user.id",
+        index=True,
+    )
+
     category: str = Field(
         index=True,
     )

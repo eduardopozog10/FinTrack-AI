@@ -12,13 +12,15 @@ class BudgetService:
     def process(
         session: Session,
         command: AICommand,
+        user_id: int | None = None,
     ):
 
         budget = BudgetCrudService.get_by_category(
             session=session,
             category = CategoryNormalizerService.normalize(
                 command.category
-            )
+            ),
+            user_id=user_id,
         )
 
         if budget is None:
@@ -27,6 +29,7 @@ class BudgetService:
                 session=session,
                 category=command.category,
                 amount=command.amount,
+                user_id=user_id,
             )
 
             return OperationResult(

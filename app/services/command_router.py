@@ -10,6 +10,7 @@ class CommandRouter:
     def route(
         session: Session,
         command: AICommand,
+        user_id: int | None = None,
     ):
 
         service = COMMAND_HANDLERS.get(command.intent)
@@ -23,4 +24,5 @@ class CommandRouter:
         return service.process(
             session=session,
             command=command,
+            user_id=user_id,
         )

@@ -1,6 +1,8 @@
 from sqlmodel import Session, select
 
 from app.models.transaction import Transaction
+from app.schemas.ai_command import AICommand
+from app.schemas.operation_result import OperationResult
 
 
 class DeleteTransactionService:
@@ -8,13 +10,28 @@ class DeleteTransactionService:
     @staticmethod
     def process(
         session: Session,
-        description: str,
+        command: AICommand,
+        user_id: int | None = None,
     ):
+
+        description = command.description
+
+        if not description:
+            return OperationResult(
+                success=False,
+                action="transaction_deleted",
+                data={
+                    "message": "No pude determinar qué transacción eliminar."
+                },
+            )
 
         transaction = session.exec(
             select(Transaction)
             .where(
-                Transaction.description.ilike(f"%{description}%")
+                Transaction.user_id == user_id,
+                Transaction.description.ilike(
+                    f"%{description}%"
+                ),
             )
             .order_by(
                 Transaction.created_at.desc(),
@@ -22,14 +39,23 @@ class DeleteTransactionService:
         ).first()
 
         if transaction is None:
-            return {
-                "message": "No encontré esa transacción.",
-            }
+            return OperationResult(
+                success=False,
+                action="transaction_deleted",
+                data={
+                    "message": "No encontré esa transacción."
+                },
+            )
+
+        description_deleted = transaction.description
 
         session.delete(transaction)
         session.commit()
 
-        return {
-            "message": "Transacción eliminada correctamente.",
-            "description": transaction.description,
-        }
+        return OperationResult(
+            success=True,
+            action="transaction_deleted",
+            data={
+                "description": description_deleted,
+            },
+        )

@@ -36,6 +36,9 @@ class AICommandAdapter:
         elif analysis.intencion_usuario == "crear_presupuesto":
             intent = Intent.BUDGET
 
+        elif analysis.intencion_usuario == "consultar_presupuesto":
+            intent = Intent.BUDGET_QUERY
+
         query_filter = None
 
         if intent == Intent.QUERY:

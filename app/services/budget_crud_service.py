@@ -10,11 +10,13 @@ class BudgetCrudService:
         session: Session,
         category: str,
         amount: float,
+        user_id: int | None = None,
     ):
 
         budget = Budget(
             category=category,
             amount=amount,
+            user_id=user_id,
         )
 
         session.add(budget)
@@ -27,11 +29,15 @@ class BudgetCrudService:
     def get_by_category(
         session: Session,
         category: str,
+        user_id: int | None = None,
     ):
 
         return session.exec(
             select(Budget)
-            .where(Budget.category == category)
+            .where(
+                Budget.category == category,
+                Budget.user_id == user_id,
+            )
         ).first()
 
     @staticmethod

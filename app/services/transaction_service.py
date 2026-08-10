@@ -29,9 +29,11 @@ class TransactionService:
         category: str,
         description: str,
         transaction_type: TransactionType,
+        user_id: int | None = None,
     ):
 
         db_transaction = Transaction(
+            user_id=user_id,
             description=description,
             amount=amount,
             transaction_type=transaction_type,

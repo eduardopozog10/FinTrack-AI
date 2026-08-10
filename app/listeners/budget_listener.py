@@ -11,6 +11,7 @@ class BudgetListener:
         status = BudgetStatusService.get_status(
             session=event.metadata["session"],
             category=transaction.category,
+            user_id=transaction.user_id,
         )
 
         if status is not None:

@@ -12,11 +12,15 @@ class BudgetStatusService:
     def get_status(
         session: Session,
         category: str,
+        user_id: int | None = None,
     ):
 
         budget = session.exec(
             select(Budget)
-            .where(Budget.category == category)
+            .where(
+                Budget.category == category,
+                Budget.user_id == user_id,
+            )
         ).first()
 
         if budget is None:
@@ -27,6 +31,7 @@ class BudgetStatusService:
             .where(
                 Transaction.transaction_type == TransactionType.EXPENSE,
                 Transaction.category == category,
+                Transaction.user_id == user_id,
             )
         ).one()
 

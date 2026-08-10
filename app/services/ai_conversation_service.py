@@ -23,8 +23,10 @@ class AIConversationService:
             "budget_updated",
             "balance",
             "today_expense",
-            "month_expense",
+            "month_expense",    
             "month_income",
+            "budget_status",
+            "budget_status_all",
         ]:
 
             print("Usando TemplateResponseService")

@@ -7,6 +7,7 @@ class IntentMapper:
         "consultar_gastos": "get_expenses",
         "consultar_ingresos": "get_income",
         "consultar_categoria": "get_category_expenses",
+        "consultar_presupuesto": "get_budget",
     }
 
     @classmethod

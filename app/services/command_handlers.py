@@ -8,6 +8,7 @@ from app.services.query_router import QueryRouter
 from app.services.update_transaction_service import UpdateTransactionService
 from app.services.delete_transaction_service import DeleteTransactionService
 from app.services.budget_service import BudgetService
+from app.services.budget_query_service import BudgetQueryService
 
 
 COMMAND_HANDLERS = {
@@ -19,4 +20,5 @@ COMMAND_HANDLERS = {
     Intent.UPDATE: UpdateTransactionService,
     Intent.DELETE: DeleteTransactionService,
     Intent.BUDGET: BudgetService,
+    Intent.BUDGET_QUERY: BudgetQueryService,
 }

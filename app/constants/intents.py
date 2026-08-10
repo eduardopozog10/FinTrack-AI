@@ -12,7 +12,9 @@ class Intent:
 
     DELETE_TRANSACTION = "delete_transaction"
 
-    BUDGET = "budget"
+    BUDGET = "budget"  
+     
+    BUDGET_QUERY = "budget_query"
 
     LIST = "list"
 

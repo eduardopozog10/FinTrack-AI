@@ -4,6 +4,7 @@ from sqlalchemy import func
 from sqlmodel import Session, select
 
 from app.models.transaction import Transaction
+from app.schemas.operation_result import OperationResult
 
 
 class UniversalQueryService:
@@ -12,9 +13,18 @@ class UniversalQueryService:
     def process(
         session: Session,
         query_filter,
+        user_id: int | None = None,
     ):
 
         filters = []
+
+        # ----------------------------
+        # Usuario
+        # ----------------------------
+
+        filters.append(
+            Transaction.user_id == user_id,
+        )
 
         # ----------------------------
         # Tipo de transacción
@@ -86,9 +96,13 @@ class UniversalQueryService:
                 "TOTAL_INCOME": "total_income",
             }[query_filter.action]
 
-            return {
-                key: total or 0,
-            }
+            return OperationResult(
+                success=True,
+                action=key,
+                data={
+                    key: total or 0,
+                },
+            )
 
         # ----------------------------
         # Máximos

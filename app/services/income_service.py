@@ -13,6 +13,7 @@ class IncomeService:
     def process(
         session: Session,
         command: AICommand,
+        user_id: int | None = None,
     ):
 
         amount = command.amount
@@ -31,6 +32,7 @@ class IncomeService:
             category=category,
             description=description,
             transaction_type=TransactionType.INCOME,
+            user_id=user_id,
         )
 
         return OperationResult(

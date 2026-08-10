@@ -30,10 +30,25 @@ class AIQueryMapper:
 
         period = None
 
+        # Primero inferimos el período desde query_type
+        if query_type == "TODAY_EXPENSE":
+            period = "TODAY"
+
+        elif query_type in [
+            "MONTH_EXPENSE",
+            "MONTH_INCOME",
+        ]:
+            period = "MONTH"
+
+        # Si Gemini entrega una fecha/período explícito,
+        # puede definir el período directamente
         if analysis.fecha_mencionada:
-            period = AIQueryMapper.PERIOD_MAP.get(
+            mapped_period = AIQueryMapper.PERIOD_MAP.get(
                 analysis.fecha_mencionada.lower()
             )
+
+            if mapped_period:
+                period = mapped_period
 
         category = analysis.categoria_probable
 

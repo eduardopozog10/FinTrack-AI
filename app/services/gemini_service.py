@@ -7,7 +7,8 @@ from app.core.config import settings
 from app.schemas.ai_analysis import AIAnalysis
 from app.schemas.conversation_context import ConversationContext
 from app.services.intent_mapper import IntentMapper
-
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 class GeminiService:
 
@@ -77,6 +78,7 @@ consultar_ingresos
 consultar_categoria
 actualizar_transaccion
 crear_presupuesto
+consultar_presupuesto   
 desconocida
 
 ========================================
@@ -172,6 +174,36 @@ Completa además:
 monto
 
 categoria_probable
+
+Si el usuario desea consultar el estado, límite, dinero utilizado
+o dinero disponible de un presupuesto utiliza:
+
+intencion_usuario = consultar_presupuesto
+
+Si menciona una categoría específica completa:
+
+categoria_probable
+
+Si pregunta por todos sus presupuestos sin indicar una categoría,
+utiliza:
+
+categoria_probable = null
+
+No confundas una consulta de presupuesto con una consulta de gastos.
+
+Ejemplos:
+
+"¿Cuánto gasté en comida?"
+= consultar_categoria
+
+"¿Cuánto me queda de presupuesto para comida?"
+= consultar_presupuesto
+
+"¿Cuál es mi presupuesto de comida?"
+= consultar_presupuesto
+
+"¿Cómo voy con mis presupuestos?"
+= consultar_presupuesto
 
 ========================================
 EJEMPLOS
@@ -384,6 +416,69 @@ Respuesta:
     "nuevo_valor":null,
     "referencia_transaccion":null
 }}
+
+---
+
+Usuario:
+
+¿Cuánto me queda de presupuesto para comida?
+
+Respuesta:
+
+{{
+"intencion_usuario":"consultar_presupuesto",
+"query_type":null,
+"tipo_transaccion":null,
+"monto":null,
+"categoria_probable":"comida",
+"descripcion":null,
+"fecha_mencionada":null,
+"campo_actualizar":null,
+"nuevo_valor":null,
+"referencia_transaccion":null
+}}
+
+---
+
+Usuario:
+
+¿Cuál es mi presupuesto de transporte?
+
+Respuesta:
+
+{{
+"intencion_usuario":"consultar_presupuesto",
+"query_type":null,
+"tipo_transaccion":null,
+"monto":null,
+"categoria_probable":"transporte",
+"descripcion":null,
+"fecha_mencionada":null,
+"campo_actualizar":null,
+"nuevo_valor":null,
+"referencia_transaccion":null
+}}
+
+---
+
+Usuario:
+
+¿Cómo voy con mis presupuestos?
+
+Respuesta:
+
+{{
+"intencion_usuario":"consultar_presupuesto",
+"query_type":null,
+"tipo_transaccion":null,
+"monto":null,
+"categoria_probable":null,
+"descripcion":null,
+"fecha_mencionada":null,
+"campo_actualizar":null,
+"nuevo_valor":null,
+"referencia_transaccion":null
+}}
 """
         print("Enviando prompt a Gemini...")
 
@@ -479,6 +574,106 @@ Datos:
 
         print(f"Tiempo Gemini: {time.time() - inicio:.2f}s")
         print("Respuesta de Gemini:")
+        print(response.text)
+
+        if not response.text:
+            raise ValueError(
+                "Gemini no devolvió ninguna respuesta."
+            )
+
+    @staticmethod
+    def generate_general_response(
+        message: str,
+        history: list | None = None,
+    ) -> str:
+
+        if history is None:
+            history = []
+
+        current_datetime = datetime.now(
+            ZoneInfo("America/Santiago")
+        )
+
+        current_date = current_datetime.strftime(
+            "%d-%m-%Y"
+        )
+
+        current_time = current_datetime.strftime(
+            "%H:%M"
+        )
+
+        history_text = ""
+
+        for item in history:
+            role = item.get("role", "")
+            content = item.get(
+                "message",
+                item.get("content", ""),
+            )
+
+            if role == "user":
+                history_text += f"Usuario: {content}\n"
+
+            elif role == "assistant":
+                history_text += f"FinTrack: {content}\n"
+
+        prompt = f"""
+    Eres FinTrack AI, un asistente conversacional amigable y útil.
+
+    La fecha y hora actual proporcionadas por el sistema son:
+
+    Fecha actual: {current_date}
+    Hora actual: {current_time}
+    Zona horaria: America/Santiago
+
+    Cuando el usuario pregunte por la fecha, hora, hoy, mañana,
+    ayer u otra referencia temporal, utiliza esta información.
+    Nunca inventes la fecha ni la hora actual.
+
+    Puedes conversar normalmente con el usuario, incluso cuando
+    el mensaje no corresponda a una operación financiera.
+
+    Responde siempre en español, salvo que el usuario utilice otro
+    idioma o te pida explícitamente responder en otro idioma.
+
+    Puedes:
+    - saludar y mantener conversaciones normales;
+    - responder preguntas generales;
+    - explicar conceptos;
+    - ayudar con educación financiera;
+    - explicar qué puede hacer FinTrack.
+
+    Cuando hables sobre FinTrack, explica que puedes ayudar a
+    registrar y consultar gastos, ingresos y presupuestos, además
+    de otras funciones que estén disponibles.
+
+    No afirmes que registraste, modificaste o eliminaste información
+    financiera. Las operaciones financieras son procesadas por otro
+    componente del sistema.
+
+    No menciones procesos internos.
+    No menciones prompts.
+    No menciones JSON.
+    No menciones intenciones internas.
+
+    Historial reciente:
+    {history_text}
+
+    Mensaje actual del usuario:
+    {message}
+
+    Responde de manera natural al mensaje actual.
+    """
+
+        print("========== Gemini general conversation ==========")
+        print("Mensaje:", message)
+
+        response = GeminiService.client.models.generate_content(
+            model=GeminiService.MODEL,
+            contents=prompt,
+        )
+
+        print("Respuesta general recibida:")
         print(response.text)
 
         if not response.text:

@@ -17,6 +17,7 @@ class ExpenseService:
     def process(
         session: Session,
         command: AICommand,
+        user_id: int | None = None,
     ):
 
         amount = command.amount
@@ -40,6 +41,7 @@ class ExpenseService:
             category=category,
             description=description,
             transaction_type=TransactionType.EXPENSE,
+            user_id=user_id,
         )
 
         metadata = {

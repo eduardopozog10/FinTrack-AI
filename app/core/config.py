@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     )
 
     gemini_api_key: str = ""
+    telegram_bot_token: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
