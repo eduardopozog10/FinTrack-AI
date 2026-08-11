@@ -8,6 +8,7 @@ class IntentMapper:
         "consultar_ingresos": "get_income",
         "consultar_categoria": "get_category_expenses",
         "consultar_presupuesto": "get_budget",
+        "eliminar_transaccion": "delete_transaction",
     }
 
     @classmethod

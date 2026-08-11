@@ -198,17 +198,21 @@ class UniversalQueryService:
                 .order_by(Transaction.created_at.desc())
             ).all()
 
-            return {
-                "expense_history": [
-                    {
-                        "description": transaction.description,
-                        "amount": transaction.amount,
-                        "category": transaction.category,
-                        "created_at": transaction.created_at,
-                    }
-                    for transaction in transactions
-                ]
-            }
+            return OperationResult(
+                success=True,
+                action="expense_history",
+                data={
+                    "expense_history": [
+                        {
+                            "description": transaction.description,
+                            "amount": transaction.amount,
+                            "category": transaction.category,
+                            "created_at": transaction.created_at,
+                        }
+                        for transaction in transactions
+                    ]
+                },
+            )
 
         return {
             "message": "Acción aún no implementada.",

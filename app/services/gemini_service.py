@@ -206,6 +206,39 @@ Ejemplos:
 = consultar_presupuesto
 
 ========================================
+REGLAS PARA ELIMINAR TRANSACCIONES
+========================================
+
+Si el usuario desea eliminar o borrar una transacción específica utiliza:
+
+intencion_usuario = eliminar_transaccion
+
+Completa:
+
+tipo_transaccion
+
+Valores posibles:
+
+gasto
+ingreso
+
+descripcion
+
+Debe contener la descripción que permita identificar la transacción.
+
+referencia_transaccion
+
+Utiliza:
+
+ultima
+
+cuando el usuario haga referencia a la última transacción o cuando
+el historial permita identificarla.
+
+No utilices esta intención si el usuario solicita eliminar todas
+sus transacciones o todos sus gastos.
+
+========================================
 EJEMPLOS
 ========================================
 
@@ -479,6 +512,25 @@ Respuesta:
 "nuevo_valor":null,
 "referencia_transaccion":null
 }}
+------------------------------------------------
+Usuario:
+
+Borra el gasto de hamburguesa
+
+Respuesta:
+
+{{
+    "intencion_usuario":"eliminar_transaccion",
+    "query_type":null,
+    "tipo_transaccion":"gasto",
+    "monto":null,
+    "categoria_probable":null,
+    "descripcion":"hamburguesa",
+    "fecha_mencionada":null,
+    "campo_actualizar":null,
+    "nuevo_valor":null,
+    "referencia_transaccion":"ultima"
+}}
 """
         print("Enviando prompt a Gemini...")
 
@@ -580,6 +632,7 @@ Datos:
             raise ValueError(
                 "Gemini no devolvió ninguna respuesta."
             )
+        return response.text.strip()
 
     @staticmethod
     def generate_general_response(
