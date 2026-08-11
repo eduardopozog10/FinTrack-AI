@@ -25,41 +25,90 @@ class UpdateTransactionService:
         transaction_reference = command.transaction_reference
         transaction_type = command.transaction_type
 
+        # ==========================================
+        # CONSULTA BASE DEL USUARIO
+        # ==========================================
+
         query = select(Transaction).where(
             Transaction.user_id == user_id
         )
 
+        # ==========================================
+        # FILTRAR POR TIPO DE TRANSACCIÓN
+        # ==========================================
+
         if transaction_type == "gasto":
             query = query.where(
-                Transaction.transaction_type == TransactionType.EXPENSE
+                Transaction.transaction_type
+                == TransactionType.EXPENSE
             )
 
         elif transaction_type == "ingreso":
             query = query.where(
-                Transaction.transaction_type == TransactionType.INCOME
+                Transaction.transaction_type
+                == TransactionType.INCOME
             )
 
-        # Por ahora seguimos usando la última transacción.
-        # Más adelante usaremos transaction_reference.
+        # ==========================================
+        # BUSCAR TRANSACCIÓN POR REFERENCIA
+        # ==========================================
+
+        if transaction_reference:
+
+            reference = transaction_reference.strip().lower()
+
+            generic_references = [
+                "ultima",
+                "última",
+                "ultimo",
+                "último",
+                "anterior",
+            ]
+
+            # Si la referencia NO es genérica,
+            # buscamos por la descripción.
+            if reference not in generic_references:
+
+                query = query.where(
+                    Transaction.description.ilike(
+                        f"%{transaction_reference}%"
+                    )
+                )
+
+        # Si existen varias coincidencias,
+        # utilizamos la más reciente.
         transaction = session.exec(
             query.order_by(
                 Transaction.created_at.desc()
             )
         ).first()
 
+        # ==========================================
+        # TRANSACCIÓN NO ENCONTRADA
+        # ==========================================
+
         if transaction is None:
             return OperationResult(
                 success=False,
                 action="transaction_updated",
                 data={
-                    "message": "No encontré ninguna transacción para actualizar."
+                    "message": (
+                        "No encontré ninguna transacción "
+                        "que coincida con tu solicitud."
+                    )
                 },
             )
 
-        # Guardamos los valores anteriores antes de modificar
-        # la transacción.
+        # ==========================================
+        # GUARDAR VALORES ANTERIORES
+        # ==========================================
+
         previous_category = transaction.category
         previous_amount = transaction.amount
+
+        # ==========================================
+        # ACTUALIZAR CAMPO
+        # ==========================================
 
         if update_field == "amount":
             transaction.amount = float(update_value)
@@ -74,15 +123,22 @@ class UpdateTransactionService:
 
             if str(update_value).lower() == "ayer":
                 transaction.created_at = (
-                    transaction.created_at - timedelta(days=1)
+                    transaction.created_at
+                    - timedelta(days=1)
                 )
+
+        # ==========================================
+        # GUARDAR CAMBIOS
+        # ==========================================
 
         session.add(transaction)
         session.commit()
         session.refresh(transaction)
 
-        # Publicamos el evento después de actualizar
-        # correctamente la transacción.
+        # ==========================================
+        # EVENTO DE ACTUALIZACIÓN
+        # ==========================================
+
         event = TransactionUpdatedEvent(
             transaction=transaction,
             previous_category=previous_category,
@@ -94,6 +150,10 @@ class UpdateTransactionService:
         )
 
         EventBus.dispatch(event)
+
+        # ==========================================
+        # RESPUESTA
+        # ==========================================
 
         return OperationResult(
             success=True,

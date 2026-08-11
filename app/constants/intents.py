@@ -12,9 +12,13 @@ class Intent:
 
     DELETE_TRANSACTION = "delete_transaction"
 
-    BUDGET = "budget"  
-     
+    BUDGET = "budget"
+
     BUDGET_QUERY = "budget_query"
+
+    BUDGET_UPDATE = "budget_update"
+
+    BUDGET_DELETE = "budget_delete"
 
     LIST = "list"
 
@@ -23,5 +27,9 @@ class Intent:
     UPDATE = "update"
 
     DELETE = "delete"
+
+    DELETE_ALL_EXPENSES = "delete_all_expenses"
+    
+    DELETE_ALL_BUDGETS = "delete_all_budgets"
 
     UNKNOWN = "unknown"

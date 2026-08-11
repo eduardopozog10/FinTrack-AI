@@ -17,9 +17,9 @@ class TemplateResponseService:
         if context.action == "expense_created":
 
             response = (
-                f"💸 ¡Listo! Registré un gasto de "
+                f"💸 Registré un gasto de "
                 f"${data.amount:,.0f} en "
-                f"{data.description}.\n\n"
+                f"{data.description}.\n"
                 f"Categoría: {data.category.capitalize()}."
             )
 
@@ -38,8 +38,8 @@ class TemplateResponseService:
 
                 response += (
                     "\n\n"
-                    "📊 Presupuesto\n\n"
-                    f"Utilizado: ${budget['spent']:,.0f} de "
+                    "📊 Presupuesto\n"
+                    f"${budget['spent']:,.0f} de "
                     f"${budget['budget']:,.0f} "
                     f"({budget['percentage']:.1f}%)\n"
                     f"Disponible: ${budget['remaining']:,.0f}"
@@ -50,11 +50,38 @@ class TemplateResponseService:
             # ======================================
 
             if budget_alert:
-
                 response += (
-                    "\n\n"
+                    "\n"
                     f"{budget_alert['message']}"
                 )
+
+            return response
+
+        # ==========================================
+        # MÚLTIPLES GASTOS CREADOS
+        # ==========================================
+
+        if context.action == "expenses_created":
+
+            if not data:
+                return "No pude registrar los gastos."
+
+            response = f"💸 Registré {len(data)} gastos:\n"
+
+            for transaction in data:
+                response += (
+                    f"\n• ${transaction.amount:,.0f} · "
+                    f"{transaction.description}"
+                )
+
+            total = sum(
+                transaction.amount
+                for transaction in data
+            )
+
+            response += (
+                f"\n\nTotal: ${total:,.0f}"
+            )
 
             return response
 
@@ -65,7 +92,7 @@ class TemplateResponseService:
         if context.action == "income_created":
 
             return (
-                f"💰 ¡Perfecto! Registré un ingreso de "
+                f"💰 Registré un ingreso de "
                 f"${data.amount:,.0f} por "
                 f"{data.description}."
             )
@@ -75,6 +102,9 @@ class TemplateResponseService:
         # ==========================================
 
         if context.action == "transaction_updated":
+
+            if not context.success:
+                return data["message"]
 
             field = None
 
@@ -86,23 +116,23 @@ class TemplateResponseService:
 
             if field == "amount":
                 return (
-                    f"💰 Listo. Actualicé el monto a "
+                    f"💰 Actualicé el monto a "
                     f"${data.amount:,.0f}."
                 )
 
             if field == "category":
                 return (
-                    f"🏷️ Listo. Cambié la categoría a "
+                    f"🏷️ Cambié la categoría a "
                     f"{data.category.capitalize()}."
                 )
 
             if field == "description":
                 return (
-                    f"✏️ Listo. Cambié la descripción a "
+                    f"✏️ Cambié la descripción a "
                     f"{data.description}."
                 )
 
-            return "✏️ La transacción fue actualizada correctamente."
+            return "✏️ Transacción actualizada."
 
         # ==========================================
         # TRANSACCIÓN ELIMINADA
@@ -115,7 +145,73 @@ class TemplateResponseService:
 
             return (
                 f"🗑️ Eliminé la transacción "
-                f"{data['description']} correctamente."
+                f"{data['description']}."
+            )
+
+        # ==========================================
+        # CONFIRMAR ELIMINACIÓN DE TODOS LOS GASTOS
+        # ==========================================
+
+        if context.action == "delete_all_expenses_confirmation":
+
+            if not context.success:
+                return data["message"]
+
+            count = data["count"]
+
+            if count == 1:
+                return (
+                    "⚠️ ¿Seguro que quieres eliminar tu único gasto?\n"
+                    "Responde Sí o No."
+                )
+
+            return (
+                f"⚠️ ¿Seguro que quieres eliminar tus {count} gastos?\n"
+                "Responde Sí o No."
+            )
+
+        # ==========================================
+        # CONFIRMAR ELIMINACIÓN DE TODOS LOS PRESUPUESTOS
+        # ==========================================
+
+        if context.action == "delete_all_budgets_confirmation":
+
+            if not context.success:
+                return data["message"]
+
+            count = data["count"]
+
+            if count == 1:
+                return (
+                    "⚠️ ¿Seguro que quieres eliminar tu único presupuesto?\n"
+                    "Responde Sí o No."
+                )
+
+            return (
+                f"⚠️ ¿Seguro que quieres eliminar tus {count} presupuestos?\n"
+                "Responde Sí o No."
+            )
+
+        # ==========================================
+        # CONFIRMAR ELIMINACIÓN DE PRESUPUESTOS
+        # ==========================================
+
+        if context.action == "delete_all_budgets_confirmation":
+
+            if not context.success:
+                return data["message"]
+
+            count = data["count"]
+
+            if count == 1:
+                return (
+                    "⚠️ ¿Seguro que quieres eliminar tu único presupuesto?\n"
+                    "Responde Sí o No."
+                )
+
+            return (
+                f"⚠️ ¿Seguro que quieres eliminar tus {count} presupuestos?\n"
+                "Responde Sí o No."
             )
 
         # ==========================================
@@ -137,9 +233,12 @@ class TemplateResponseService:
 
         if context.action == "budget_created":
 
+            if not context.success:
+                return data["message"]
+
             return (
-                f"🎯 Presupuesto creado para "
-                f"{data.category.capitalize()} por "
+                f"🎯 Presupuesto de "
+                f"{data.category.capitalize()} creado por "
                 f"${data.amount:,.0f}."
             )
 
@@ -149,10 +248,27 @@ class TemplateResponseService:
 
         if context.action == "budget_updated":
 
+            if not context.success:
+                return data["message"]
+
             return (
-                f"✏️ Presupuesto actualizado para "
-                f"{data.category.capitalize()}.\n\n"
-                f"Nuevo monto: ${data.amount:,.0f}."
+                f"✏️ Presupuesto de "
+                f"{data.category.capitalize()} actualizado a "
+                f"${data.amount:,.0f}."
+            )
+
+        # ==========================================
+        # PRESUPUESTO ELIMINADO
+        # ==========================================
+
+        if context.action == "budget_deleted":
+
+            if not context.success:
+                return data["message"]
+
+            return (
+                f"🗑️ Presupuesto de "
+                f"{data['category'].capitalize()} eliminado."
             )
 
         # ==========================================

@@ -68,16 +68,15 @@ class CategoryNormalizerService:
         "doctor": "salud",
     }
 
-    @classmethod
-    def normalize(
-        cls,
+    @staticmethod
+    def clean(
         category: str | None,
     ) -> str | None:
 
         if category is None:
             return None
 
-        category = (
+        return (
             unicodedata.normalize("NFD", category)
             .encode("ascii", "ignore")
             .decode("utf-8")
@@ -85,13 +84,19 @@ class CategoryNormalizerService:
             .strip()
         )
 
+    @classmethod
+    def normalize(
+        cls,
+        category: str | None,
+    ) -> str | None:
+
+        category = cls.clean(category)
+
+        if category is None:
+            return None
+
         normalized_map = {
-            (
-                unicodedata.normalize("NFD", key)
-                .encode("ascii", "ignore")
-                .decode("utf-8")
-                .lower()
-            ): value
+            cls.clean(key): value
             for key, value in cls.CATEGORY_MAP.items()
         }
 
@@ -99,3 +104,11 @@ class CategoryNormalizerService:
             category,
             category,
         )
+
+    @classmethod
+    def normalize_budget(
+        cls,
+        category: str | None,
+    ) -> str | None:
+
+        return cls.clean(category)

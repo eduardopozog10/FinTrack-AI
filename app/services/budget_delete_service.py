@@ -6,7 +6,7 @@ from app.services.budget_crud_service import BudgetCrudService
 from app.services.category_normalizer_service import CategoryNormalizerService
 
 
-class BudgetService:
+class BudgetDeleteService:
 
     @staticmethod
     def process(
@@ -15,7 +15,7 @@ class BudgetService:
         user_id: int | None = None,
     ):
 
-        category = CategoryNormalizerService.normalize(
+        category = CategoryNormalizerService.normalize_budget(
             command.category
         )
 
@@ -26,67 +26,53 @@ class BudgetService:
         if not category:
             return OperationResult(
                 success=False,
-                action="budget_created",
+                action="budget_deleted",
                 data={
                     "message": (
-                        "No pude determinar la categoría "
-                        "del presupuesto."
+                        "No pude determinar qué presupuesto "
+                        "quieres eliminar."
                     )
                 },
             )
 
         # ==========================================
-        # VALIDAR MONTO
+        # BUSCAR PRESUPUESTO DEL USUARIO
         # ==========================================
 
-        if command.amount is None:
-            return OperationResult(
-                success=False,
-                action="budget_created",
-                data={
-                    "message": (
-                        "No pude determinar el monto "
-                        "del presupuesto."
-                    )
-                },
-            )
-
-        # ==========================================
-        # COMPROBAR SI YA EXISTE
-        # ==========================================
-
-        existing_budget = BudgetCrudService.get_by_category(
+        budget = BudgetCrudService.get_by_category(
             session=session,
             category=category,
             user_id=user_id,
         )
 
-        if existing_budget is not None:
+        if budget is None:
             return OperationResult(
                 success=False,
-                action="budget_created",
+                action="budget_deleted",
                 data={
                     "message": (
-                        f"Ya tienes un presupuesto para "
-                        f"{category} de "
-                        f"${existing_budget.amount:,.0f}."
-                    ),
+                        f"No tienes un presupuesto configurado "
+                        f"para {category}."
+                    )
                 },
             )
 
+        # Guardamos la categoría antes de eliminar
+        deleted_category = budget.category
+
         # ==========================================
-        # CREAR PRESUPUESTO
+        # ELIMINAR PRESUPUESTO
         # ==========================================
 
-        budget = BudgetCrudService.create(
+        BudgetCrudService.delete(
             session=session,
-            category=category,
-            amount=command.amount,
-            user_id=user_id,
+            budget=budget,
         )
 
         return OperationResult(
             success=True,
-            action="budget_created",
-            data=budget,
+            action="budget_deleted",
+            data={
+                "category": deleted_category,
+            },
         )

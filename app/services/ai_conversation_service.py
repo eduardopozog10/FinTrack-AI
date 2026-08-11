@@ -21,12 +21,16 @@ class AIConversationService:
             "transaction_deleted",
             "budget_created",
             "budget_updated",
+            "budget_deleted",
+            "budget_status",
+            "budget_status_all",
             "balance",
             "today_expense",
             "month_expense",    
             "month_income",
-            "budget_status",
-            "budget_status_all",
+            "expenses_created",
+            "delete_all_expenses_confirmation",
+            "delete_all_budgets_confirmation",
         ]:
 
             print("Usando TemplateResponseService")

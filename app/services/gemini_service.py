@@ -51,18 +51,95 @@ HISTORIAL
 {history_text}
 
 ========================================
-USO DEL HISTORIAL
+USO DEL HISTORIAL Y CONTINUIDAD
 ========================================
 
-Utiliza el historial únicamente para resolver referencias como:
+Utiliza el historial reciente para comprender mensajes que continúan,
+completan o corrigen una operación financiera anterior.
 
-- el último
-- ese gasto
-- ese ingreso
-- fue ayer
-- corrígelo
-- cámbialo
-- era sueldo
+El usuario puede escribir mensajes incompletos porque está continuando
+una conversación anterior.
+
+Debes conservar el tipo de operación cuando el mensaje actual sea
+claramente una continuación de la operación anterior.
+
+Ejemplos:
+
+Usuario:
+"Crea un presupuesto para ropa"
+
+Asistente:
+"No pude determinar el monto del presupuesto."
+
+Usuario:
+"De 150000"
+
+Interpretación:
+crear_presupuesto
+categoria_probable = "ropa"
+monto = 150000
+
+
+Usuario:
+"Crea un presupuesto de 100000 para comida"
+
+Asistente:
+"Presupuesto de Comida creado por $100000."
+
+Usuario:
+"Y otro de 50000 para ocio"
+
+Interpretación:
+crear_presupuesto
+categoria_probable = "ocio"
+monto = 50000
+
+
+Usuario:
+"Crea un presupuesto para ropa de 150000"
+
+Asistente:
+"Presupuesto de Ropa creado por $150000."
+
+Usuario:
+"Y para comida de 70000"
+
+Interpretación:
+crear_presupuesto
+categoria_probable = "comida"
+monto = 70000
+
+IMPORTANTE:
+
+Expresiones como:
+
+- "y otro..."
+- "y para..."
+- "también..."
+- "otro de..."
+- "además..."
+- "de 50000"
+- "para comida"
+- "ese"
+- "el anterior"
+- "corrígelo"
+- "cámbialo"
+
+pueden depender del historial.
+
+Si el mensaje actual parece una continuación directa de una operación
+anterior, conserva la intención de esa operación salvo que el usuario
+indique claramente que desea realizar una operación diferente.
+
+Por ejemplo:
+
+Si se estaba creando un presupuesto y el usuario dice:
+
+"Y para comida de 70000"
+
+NO lo interpretes como registrar_gasto.
+
+Debe interpretarse como crear_presupuesto.
 
 Si el historial no aporta contexto suficiente, ignóralo.
 
@@ -78,7 +155,12 @@ consultar_ingresos
 consultar_categoria
 actualizar_transaccion
 crear_presupuesto
-consultar_presupuesto   
+actualizar_presupuesto
+eliminar_presupuesto
+eliminar_todos_presupuestos
+consultar_presupuesto
+eliminar_transaccion
+eliminar_todos_gastos
 desconocida
 
 ========================================
@@ -129,8 +211,40 @@ Devuelve SIEMPRE un único objeto JSON exactamente con esta estructura:
     "fecha_mencionada": null,
     "campo_actualizar": null,
     "nuevo_valor": null,
-    "referencia_transaccion": null
+    "referencia_transaccion": null,
+    "transacciones": null
 }}
+
+========================================
+REGLAS PARA MÚLTIPLES TRANSACCIONES
+========================================
+
+Si el usuario menciona dos o más gastos o ingresos diferentes
+en un mismo mensaje, utiliza el campo "transacciones".
+
+Cada elemento debe representar una transacción independiente y contener:
+
+tipo_transaccion
+monto
+categoria_probable
+descripcion
+fecha_mencionada
+
+Cuando utilices "transacciones":
+
+- Incluye todas las transacciones mencionadas por el usuario.
+- No combines dos compras diferentes en una sola transacción.
+- No omitas ninguna transacción que tenga un monto identificable.
+- "monto" debe corresponder únicamente a esa transacción.
+- "descripcion" debe describir únicamente esa transacción.
+- Si varias transacciones aparecen en el mismo mensaje, conserva
+  el contexto necesario para clasificar correctamente cada una.
+- No inventes transacciones.
+- No inventes montos.
+- Los campos individuales monto, categoria_probable, descripcion
+  y fecha_mencionada del objeto principal deben ser null.
+- Si existe solamente una transacción, utiliza el formato normal
+  y establece "transacciones": null.
 
 ========================================
 REGLAS PARA ACTUALIZAR TRANSACCIONES
@@ -157,23 +271,232 @@ Debe contener el nuevo valor indicado por el usuario.
 
 referencia_transaccion
 
-Por ahora utiliza siempre:
+Este campo identifica QUÉ transacción desea modificar el usuario.
 
-ultima
+REGLAS:
+
+- Si el usuario menciona explícitamente el nombre o descripción
+  de una transacción, utiliza esa descripción como referencia.
+
+Ejemplos:
+
+"cambia el agua a gimnasio"
+referencia_transaccion = "agua"
+
+"el burrito costó 4500"
+referencia_transaccion = "burrito"
+
+"cambia la mensualidad del gimnasio a 32000"
+referencia_transaccion = "mensualidad del gimnasio"
+
+- Utiliza "ultima" únicamente cuando el usuario se refiera
+  explícitamente a la última transacción o cuando use una referencia
+  contextual sin mencionar una descripción concreta.
+
+Ejemplos:
+
+"cambia mi último gasto"
+referencia_transaccion = "ultima"
+
+"en realidad fueron 18000"
+referencia_transaccion = "ultima"
+
+"ponlo en supermercado"
+referencia_transaccion = "ultima"
+
+"fue ayer"
+referencia_transaccion = "ultima"
+
+- Si el historial permite identificar claramente una transacción
+  específica por su descripción, utiliza esa descripción en vez
+  de "ultima".
+
+- No inventes una referencia que el usuario no haya mencionado
+  ni que pueda obtenerse claramente del historial.
 
 ========================================
 REGLAS PARA PRESUPUESTOS
 ========================================
 
-Si el usuario desea crear o modificar un presupuesto mensual utiliza:
+Existen cinco operaciones diferentes relacionadas con presupuestos:
+
+1. crear_presupuesto
+2. actualizar_presupuesto
+3. eliminar_presupuesto
+4. eliminar_todos_presupuestos
+5. consultar_presupuesto
+
+----------------------------------------
+CREAR PRESUPUESTO
+----------------------------------------
+
+Si el usuario desea establecer un presupuesto nuevo utiliza:
 
 intencion_usuario = crear_presupuesto
 
-Completa además:
+Completa:
 
 monto
+categoria_probable
+
+Ejemplos:
+
+"Mi presupuesto para comida es 250000"
+"Crea un presupuesto de 100000 para comida"
+"Quiero gastar máximo 150000 en transporte"
+"Pon un presupuesto de 80000 para ocio"
+
+No utilices crear_presupuesto cuando el usuario indique que desea
+cambiar, modificar, actualizar, aumentar o disminuir un presupuesto
+que ya tiene.
+
+----------------------------------------
+ACTUALIZAR PRESUPUESTO
+----------------------------------------
+
+Si el usuario desea modificar el monto de un presupuesto existente utiliza:
+
+intencion_usuario = actualizar_presupuesto
+
+Completa:
+
+monto
+categoria_probable
+
+El campo monto debe contener el NUEVO monto total del presupuesto.
+
+Ejemplos:
+
+"Cambia mi presupuesto de comida a 150000"
+
+Resultado:
+
+intencion_usuario = actualizar_presupuesto
+monto = 150000
+categoria_probable = "comida"
+
+"Actualiza mi presupuesto de gimnasio a 50000"
+
+Resultado:
+
+intencion_usuario = actualizar_presupuesto
+monto = 50000
+categoria_probable = "gimnasio"
+
+"Mi presupuesto de transporte ahora será de 80000"
+
+Resultado:
+
+intencion_usuario = actualizar_presupuesto
+monto = 80000
+categoria_probable = "transporte"
+
+No utilices crear_presupuesto cuando el usuario esté modificando
+explícitamente un presupuesto existente.
+
+----------------------------------------
+ELIMINAR PRESUPUESTO
+----------------------------------------
+
+Si el usuario desea borrar o eliminar un presupuesto utiliza:
+
+intencion_usuario = eliminar_presupuesto
+
+Completa:
 
 categoria_probable
+
+monto debe ser null.
+
+Ejemplos:
+
+"Elimina mi presupuesto de comida"
+
+Resultado:
+
+intencion_usuario = eliminar_presupuesto
+categoria_probable = "comida"
+
+"Borra el presupuesto del gimnasio"
+
+Resultado:
+
+intencion_usuario = eliminar_presupuesto
+categoria_probable = "gimnasio"
+
+"Ya no quiero mi presupuesto de transporte"
+
+Resultado:
+
+intencion_usuario = eliminar_presupuesto
+categoria_probable = "transporte"
+
+No confundas eliminar un presupuesto con eliminar gastos.
+
+"Elimina mi presupuesto de comida"
+= eliminar_presupuesto
+
+"Elimina mis gastos de comida"
+= eliminar transacciones/gastos
+
+----------------------------------------
+ELIMINAR TODOS LOS PRESUPUESTOS
+----------------------------------------
+
+Si el usuario desea eliminar todos sus presupuestos utiliza:
+
+intencion_usuario = eliminar_todos_presupuestos
+
+Utiliza esta intención cuando el usuario indique que desea borrar
+o eliminar todos sus presupuestos, sin importar las categorías.
+
+En este caso:
+
+categoria_probable = null
+monto = null
+
+Ejemplos:
+
+"Elimina todos mis presupuestos"
+= eliminar_todos_presupuestos
+
+"Borra todos mis presupuestos"
+= eliminar_todos_presupuestos
+
+"Quiero eliminar todos los presupuestos"
+= eliminar_todos_presupuestos
+
+"Borra mis presupuestos"
+= eliminar_todos_presupuestos
+
+"Elimina mis presupuestos"
+= eliminar_todos_presupuestos
+
+IMPORTANTE:
+
+Si el usuario menciona una categoría específica utiliza:
+
+eliminar_presupuesto
+
+Ejemplo:
+
+"Elimina mi presupuesto de comida"
+= eliminar_presupuesto
+
+Si solicita eliminar todos los presupuestos utiliza:
+
+eliminar_todos_presupuestos
+
+Ejemplo:
+
+"Elimina todos mis presupuestos"
+= eliminar_todos_presupuestos
+
+Nunca clasifiques "todos mis presupuestos" como eliminar_presupuesto.
+
+----------------------------------------
+CONSULTAR PRESUPUESTO
+----------------------------------------
 
 Si el usuario desea consultar el estado, límite, dinero utilizado
 o dinero disponible de un presupuesto utiliza:
@@ -184,8 +507,7 @@ Si menciona una categoría específica completa:
 
 categoria_probable
 
-Si pregunta por todos sus presupuestos sin indicar una categoría,
-utiliza:
+Si pregunta por todos sus presupuestos sin indicar una categoría:
 
 categoria_probable = null
 
@@ -238,6 +560,31 @@ el historial permita identificarla.
 No utilices esta intención si el usuario solicita eliminar todas
 sus transacciones o todos sus gastos.
 
+Si el usuario quiere eliminar TODOS sus gastos utiliza:
+
+intencion_usuario = eliminar_todos_gastos
+
+Esta intención debe utilizarse únicamente cuando el usuario indique
+claramente que quiere eliminar todos sus gastos.
+
+Ejemplos:
+
+"borra todos mis gastos"
+"elimina todos mis gastos"
+"quiero borrar todos los gastos"
+"limpia todos mis gastos"
+
+No utilizar eliminar_todos_gastos cuando el usuario mencione
+una transacción específica.
+
+Ejemplo:
+
+"borra el gasto de agua"
+
+debe utilizar:
+
+intencion_usuario = eliminar_transaccion
+descripcion = "agua"
 ========================================
 EJEMPLOS
 ========================================
@@ -391,6 +738,93 @@ Respuesta:
 
 Usuario:
 
+Cambia el agua a categoría gimnasio
+
+Respuesta:
+
+{{
+    "intencion_usuario":"actualizar_transaccion",
+    "query_type":null,
+    "tipo_transaccion":"gasto",
+    "monto":null,
+    "categoria_probable":null,
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":"category",
+    "nuevo_valor":"gimnasio",
+    "referencia_transaccion":"agua",
+    "transacciones":null
+}}
+
+------------------------------------------------
+
+Usuario:
+
+El burrito en realidad costó 4500
+
+Respuesta:
+
+{{
+    "intencion_usuario":"actualizar_transaccion",
+    "query_type":null,
+    "tipo_transaccion":"gasto",
+    "monto":null,
+    "categoria_probable":null,
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":"amount",
+    "nuevo_valor":4500,
+    "referencia_transaccion":"burrito",
+    "transacciones":null
+}}
+
+------------------------------------------------
+
+Usuario:
+
+Cambia mi presupuesto de comida a 180000
+
+Respuesta:
+
+{{
+    "intencion_usuario":"actualizar_presupuesto",
+    "query_type":null,
+    "tipo_transaccion":null,
+    "monto":180000,
+    "categoria_probable":"comida",
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":null,
+    "nuevo_valor":null,
+    "referencia_transaccion":null,
+    "transacciones":null
+}}
+
+------------------------------------------------
+
+Usuario:
+
+Elimina mi presupuesto de comida
+
+Respuesta:
+
+{{
+    "intencion_usuario":"eliminar_presupuesto",
+    "query_type":null,
+    "tipo_transaccion":null,
+    "monto":null,
+    "categoria_probable":"comida",
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":null,
+    "nuevo_valor":null,
+    "referencia_transaccion":null,
+    "transacciones":null
+}}
+------------------------------------------------
+
+Usuario:
+
 Mi presupuesto para comida es 250000
 
 Respuesta:
@@ -531,6 +965,85 @@ Respuesta:
     "nuevo_valor":null,
     "referencia_transaccion":"ultima"
 }}
+
+------------------------------------------------
+
+Usuario:
+
+Hoy gasté 35000 en la mensualidad del gimnasio y me compré un agua de 1200
+
+Respuesta:
+
+{{
+    "intencion_usuario":"registrar_gasto",
+    "query_type":null,
+    "tipo_transaccion":"gasto",
+    "monto":null,
+    "categoria_probable":null,
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":null,
+    "nuevo_valor":null,
+    "referencia_transaccion":null,
+    "transacciones":[
+        {{
+            "tipo_transaccion":"gasto",
+            "monto":35000,
+            "categoria_probable":"gimnasio",
+            "descripcion":"mensualidad del gimnasio",
+            "fecha_mencionada":null
+        }},
+        {{
+            "tipo_transaccion":"gasto",
+            "monto":1200,
+            "categoria_probable":"gimnasio",
+            "descripcion":"agua",
+            "fecha_mencionada":null
+        }}
+    ]
+}}
+------------------------------------------------
+Usuario:
+
+Borra todos mis gastos
+
+Respuesta:
+
+{{
+    "intencion_usuario":"eliminar_todos_gastos",
+    "query_type":null,
+    "tipo_transaccion":"gasto",
+    "monto":null,
+    "categoria_probable":null,
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":null,
+    "nuevo_valor":null,
+    "referencia_transaccion":null,
+    "transacciones":null
+}}
+
+------------------------------------------------
+
+Usuario:
+
+Elimina todos mis presupuestos
+
+Respuesta:
+
+{{
+    "intencion_usuario":"eliminar_todos_presupuestos",
+    "query_type":null,
+    "tipo_transaccion":null,
+    "monto":null,
+    "categoria_probable":null,
+    "descripcion":null,
+    "fecha_mencionada":null,
+    "campo_actualizar":null,
+    "nuevo_valor":null,
+    "referencia_transaccion":null,
+    "transacciones":null
+}}  
 """
         print("Enviando prompt a Gemini...")
 

@@ -6,7 +6,7 @@ from app.services.budget_crud_service import BudgetCrudService
 from app.services.category_normalizer_service import CategoryNormalizerService
 
 
-class BudgetService:
+class BudgetUpdateService:
 
     @staticmethod
     def process(
@@ -19,74 +19,54 @@ class BudgetService:
             command.category
         )
 
-        # ==========================================
-        # VALIDAR CATEGORÍA
-        # ==========================================
-
         if not category:
             return OperationResult(
                 success=False,
-                action="budget_created",
+                action="budget_updated",
                 data={
                     "message": (
-                        "No pude determinar la categoría "
-                        "del presupuesto."
+                        "No pude determinar qué presupuesto quieres actualizar."
                     )
                 },
             )
-
-        # ==========================================
-        # VALIDAR MONTO
-        # ==========================================
 
         if command.amount is None:
             return OperationResult(
                 success=False,
-                action="budget_created",
+                action="budget_updated",
                 data={
                     "message": (
-                        "No pude determinar el monto "
-                        "del presupuesto."
+                        "No pude determinar el nuevo monto del presupuesto."
                     )
                 },
             )
 
-        # ==========================================
-        # COMPROBAR SI YA EXISTE
-        # ==========================================
-
-        existing_budget = BudgetCrudService.get_by_category(
+        budget = BudgetCrudService.get_by_category(
             session=session,
             category=category,
             user_id=user_id,
         )
 
-        if existing_budget is not None:
+        if budget is None:
             return OperationResult(
                 success=False,
-                action="budget_created",
+                action="budget_updated",
                 data={
                     "message": (
-                        f"Ya tienes un presupuesto para "
-                        f"{category} de "
-                        f"${existing_budget.amount:,.0f}."
-                    ),
+                        f"No tienes un presupuesto configurado "
+                        f"para {category}."
+                    )
                 },
             )
 
-        # ==========================================
-        # CREAR PRESUPUESTO
-        # ==========================================
-
-        budget = BudgetCrudService.create(
+        budget = BudgetCrudService.update(
             session=session,
-            category=category,
+            budget=budget,
             amount=command.amount,
-            user_id=user_id,
         )
 
         return OperationResult(
             success=True,
-            action="budget_created",
+            action="budget_updated",
             data=budget,
         )

@@ -36,8 +36,20 @@ class AICommandAdapter:
         elif analysis.intencion_usuario == "eliminar_transaccion":
             intent = Intent.DELETE
 
+        elif analysis.intencion_usuario == "eliminar_todos_gastos":
+            intent = Intent.DELETE_ALL_EXPENSES
+
+        elif analysis.intencion_usuario == "eliminar_todos_presupuestos":
+            intent = Intent.DELETE_ALL_BUDGETS
+
         elif analysis.intencion_usuario == "crear_presupuesto":
             intent = Intent.BUDGET
+
+        elif analysis.intencion_usuario == "actualizar_presupuesto":
+            intent = Intent.BUDGET_UPDATE
+
+        elif analysis.intencion_usuario == "eliminar_presupuesto":
+            intent = Intent.BUDGET_DELETE
 
         elif analysis.intencion_usuario == "consultar_presupuesto":
             intent = Intent.BUDGET_QUERY
@@ -57,4 +69,5 @@ class AICommandAdapter:
             update_field=analysis.campo_actualizar,
             update_value=analysis.nuevo_valor,
             transaction_reference=analysis.referencia_transaccion,
+            transactions=analysis.transacciones,
         )

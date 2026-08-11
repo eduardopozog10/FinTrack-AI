@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from app.schemas.query_filter import QueryFilter
+from app.schemas.ai_analysis import AITransactionItem
 
 
 class AICommand(BaseModel):
@@ -22,3 +23,5 @@ class AICommand(BaseModel):
     update_value: str | float | None = None
 
     transaction_reference: str | None = None
+
+    transactions: list[AITransactionItem] | None = None
