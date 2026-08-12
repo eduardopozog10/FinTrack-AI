@@ -378,6 +378,130 @@ class TemplateResponseService:
                 f"${data['month_income']:,.0f}."
             )
 
+                # ==========================================
+        # ÚLTIMO GASTO
+        # ==========================================
+
+        if context.action == "last_expense":
+
+            if not context.success:
+                return data["message"]
+
+            created_at = data["created_at"]
+
+            return (
+                "💸 Último gasto\n\n"
+                f"📝 {data['description'].capitalize()}\n"
+                f"💰 Monto: ${data['amount']:,.0f}\n"
+                f"🏷️ Categoría: {data['category'].capitalize()}\n"
+                f"📅 Fecha: {created_at.strftime('%d/%m/%Y · %H:%M')}"
+            )
+
+        # ==========================================
+        # ÚLTIMO INGRESO
+        # ==========================================
+
+        if context.action == "last_income":
+
+            if not context.success:
+                return data["message"]
+
+            created_at = data["created_at"]
+
+            return (
+                "💰 Último ingreso\n\n"
+                f"📝 {data['description'].capitalize()}\n"
+                f"💵 Monto: ${data['amount']:,.0f}\n"
+                f"🏷️ Categoría: {data['category'].capitalize()}\n"
+                f"📅 Fecha: {created_at.strftime('%d/%m/%Y · %H:%M')}"
+            )
+
+        # ==========================================
+        # MAYOR GASTO
+        # ==========================================
+
+        if context.action == "max_expense":
+
+            if not context.success:
+                return data["message"]
+
+            created_at = data["created_at"]
+
+            return (
+                "💸 Mayor gasto\n\n"
+                f"📝 {data['description'].capitalize()}\n"
+                f"💰 Monto: ${data['amount']:,.0f}\n"
+                f"🏷️ Categoría: {data['category'].capitalize()}\n"
+                f"📅 Fecha: {created_at.strftime('%d/%m/%Y · %H:%M')}"
+            )
+
+        # ==========================================
+        # MAYOR INGRESO
+        # ==========================================
+
+        if context.action == "max_income":
+
+            if not context.success:
+                return data["message"]
+
+            created_at = data["created_at"]
+
+            return (
+                "💰 Mayor ingreso\n\n"
+                f"📝 {data['description'].capitalize()}\n"
+                f"💵 Monto: ${data['amount']:,.0f}\n"
+                f"🏷️ Categoría: {data['category'].capitalize()}\n"
+                f"📅 Fecha: {created_at.strftime('%d/%m/%Y · %H:%M')}"
+            )
+
+        # ==========================================
+        # HISTORIAL DE GASTOS
+        # ==========================================
+
+        if context.action == "expense_history":
+
+            if not context.success:
+                return data["message"]
+
+            transactions = data["expense_history"]
+
+            if not transactions:
+                return "No tienes gastos registrados."
+
+            response = "📋 Historial de gastos\n"
+
+            for index, transaction in enumerate(
+                transactions,
+                start=1,
+            ):
+
+                created_at = transaction["created_at"]
+
+                response += (
+                    f"\n{index}. "
+                    f"{transaction['description'].capitalize()}\n"
+                    f"   💰 ${transaction['amount']:,.0f} · "
+                    f"{transaction['category'].capitalize()}\n"
+                    f"   📅 "
+                    f"{created_at.strftime('%d/%m/%Y · %H:%M')}\n"
+                )
+
+            return response.strip()
+
+        # ==========================================
+        # NOMBRE DEL USUARIO ACTUALIZADO
+        # ==========================================
+
+        if context.action == "profile_name_updated":
+
+            if not context.success:
+                return data["message"]
+
+            return (
+                f"👤 ¡Listo! Desde ahora te llamaré "
+                f"{data['full_name']}."
+            )
+
         # ==========================================
         # DEFAULT
         # ==========================================

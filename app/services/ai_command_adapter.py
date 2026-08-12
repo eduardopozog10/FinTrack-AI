@@ -33,6 +33,9 @@ class AICommandAdapter:
         elif analysis.intencion_usuario == "actualizar_transaccion":
             intent = Intent.UPDATE
 
+        elif analysis.intencion_usuario == "actualizar_nombre_usuario":
+            intent = Intent.UPDATE_PROFILE_NAME
+
         elif analysis.intencion_usuario == "eliminar_transaccion":
             intent = Intent.DELETE
 

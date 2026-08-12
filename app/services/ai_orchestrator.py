@@ -19,6 +19,7 @@ class AIOrchestrator:
         message: str,
         session_id: str = "default",
         user_id: int | None = None,
+        user_name: str | None = None,
     ):
 
         history = AIMemoryService.get_history(session_id)
@@ -129,6 +130,7 @@ class AIOrchestrator:
             general_response = GeneralConversationService.process(
                 message=message,
                 history=history,
+                user_name=user_name,
             )
 
             AIMemoryService.add(

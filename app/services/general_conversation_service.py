@@ -7,6 +7,7 @@ class GeneralConversationService:
     def process(
         message: str,
         history: list | None = None,
+        user_name: str | None = None,
     ) -> str:
 
         if history is None:
@@ -15,4 +16,5 @@ class GeneralConversationService:
         return GeminiService.generate_general_response(
             message=message,
             history=history,
+            user_name=user_name,
         )

@@ -18,59 +18,66 @@ class UniversalQueryService:
 
         filters = []
 
-        # ----------------------------
-        # Usuario
-        # ----------------------------
+        # ==========================================
+        # USUARIO
+        # ==========================================
 
         filters.append(
-            Transaction.user_id == user_id,
+            Transaction.user_id == user_id
         )
 
-        # ----------------------------
-        # Tipo de transacción
-        # ----------------------------
+        # ==========================================
+        # TIPO DE TRANSACCIÓN
+        # ==========================================
 
         if query_filter.transaction_type:
-
             filters.append(
-                Transaction.transaction_type == query_filter.transaction_type,
+                Transaction.transaction_type
+                == query_filter.transaction_type
             )
 
-        # ----------------------------
-        # Categoría
-        # ----------------------------
+        # ==========================================
+        # CATEGORÍA
+        # ==========================================
 
         if query_filter.category:
-
             filters.append(
-                Transaction.category == query_filter.category,
+                Transaction.category
+                == query_filter.category
             )
 
-        # ----------------------------
-        # Período
-        # ----------------------------
+        # ==========================================
+        # PERÍODO
+        # ==========================================
 
         today = date.today()
 
         if query_filter.period == "TODAY":
 
             filters.append(
-                func.date(Transaction.created_at) == today,
+                func.date(Transaction.created_at)
+                == today
             )
 
         elif query_filter.period == "MONTH":
 
             filters.append(
-                func.extract("year", Transaction.created_at) == today.year,
+                func.extract(
+                    "year",
+                    Transaction.created_at,
+                ) == today.year
             )
 
             filters.append(
-                func.extract("month", Transaction.created_at) == today.month,
+                func.extract(
+                    "month",
+                    Transaction.created_at,
+                ) == today.month
             )
 
-        # ----------------------------
-        # Acciones
-        # ----------------------------
+        # ==========================================
+        # TOTALES
+        # ==========================================
 
         if query_filter.action in [
             "TODAY_EXPENSE",
@@ -104,9 +111,9 @@ class UniversalQueryService:
                 },
             )
 
-        # ----------------------------
-        # Máximos
-        # ----------------------------
+        # ==========================================
+        # TRANSACCIÓN DE MAYOR MONTO
+        # ==========================================
 
         if query_filter.action in [
             "MAX_EXPENSE",
@@ -117,37 +124,46 @@ class UniversalQueryService:
                 select(Transaction)
                 .where(*filters)
                 .order_by(
-                    Transaction.amount.desc(),
+                    Transaction.amount.desc()
                 )
             ).first()
-
-            if transaction is None:
-
-                message = {
-                    "MAX_EXPENSE": "No existen gastos registrados.",
-                    "MAX_INCOME": "No existen ingresos registrados.",
-                }[query_filter.action]
-
-                return {
-                    "message": message,
-                }
 
             key = {
                 "MAX_EXPENSE": "max_expense",
                 "MAX_INCOME": "max_income",
             }[query_filter.action]
 
-            return {
-                key: {
+            if transaction is None:
+
+                message = {
+                    "MAX_EXPENSE":
+                        "No existen gastos registrados.",
+                    "MAX_INCOME":
+                        "No existen ingresos registrados.",
+                }[query_filter.action]
+
+                return OperationResult(
+                    success=False,
+                    action=key,
+                    data={
+                        "message": message,
+                    },
+                )
+
+            return OperationResult(
+                success=True,
+                action=key,
+                data={
                     "description": transaction.description,
                     "amount": transaction.amount,
                     "category": transaction.category,
-                }
-            }
+                    "created_at": transaction.created_at,
+                },
+            )
 
-        # ----------------------------
-        # Últimos movimientos
-        # ----------------------------
+        # ==========================================
+        # ÚLTIMO MOVIMIENTO
+        # ==========================================
 
         if query_filter.action in [
             "LAST_EXPENSE",
@@ -158,44 +174,55 @@ class UniversalQueryService:
                 select(Transaction)
                 .where(*filters)
                 .order_by(
-                    Transaction.created_at.desc(),
+                    Transaction.created_at.desc()
                 )
             ).first()
-
-            if transaction is None:
-
-                message = {
-                    "LAST_EXPENSE": "No existen gastos registrados.",
-                    "LAST_INCOME": "No existen ingresos registrados.",
-                }[query_filter.action]
-
-                return {
-                    "message": message,
-                }
 
             key = {
                 "LAST_EXPENSE": "last_expense",
                 "LAST_INCOME": "last_income",
             }[query_filter.action]
 
-            return {
-                key: {
+            if transaction is None:
+
+                message = {
+                    "LAST_EXPENSE":
+                        "No existen gastos registrados.",
+                    "LAST_INCOME":
+                        "No existen ingresos registrados.",
+                }[query_filter.action]
+
+                return OperationResult(
+                    success=False,
+                    action=key,
+                    data={
+                        "message": message,
+                    },
+                )
+
+            return OperationResult(
+                success=True,
+                action=key,
+                data={
                     "description": transaction.description,
                     "amount": transaction.amount,
                     "category": transaction.category,
-                }
-            }
+                    "created_at": transaction.created_at,
+                },
+            )
 
-        # ----------------------------
-        # Historial de gastos
-        # ----------------------------
+        # ==========================================
+        # HISTORIAL DE GASTOS
+        # ==========================================
 
         if query_filter.action == "EXPENSE_HISTORY":
 
             transactions = session.exec(
                 select(Transaction)
                 .where(*filters)
-                .order_by(Transaction.created_at.desc())
+                .order_by(
+                    Transaction.created_at.desc()
+                )
             ).all()
 
             return OperationResult(
@@ -204,17 +231,32 @@ class UniversalQueryService:
                 data={
                     "expense_history": [
                         {
-                            "description": transaction.description,
-                            "amount": transaction.amount,
-                            "category": transaction.category,
-                            "created_at": transaction.created_at,
+                            "description":
+                                transaction.description,
+                            "amount":
+                                transaction.amount,
+                            "category":
+                                transaction.category,
+                            "created_at":
+                                transaction.created_at,
                         }
                         for transaction in transactions
                     ]
                 },
             )
 
-        return {
-            "message": "Acción aún no implementada.",
-            "action": query_filter.action,
-        }
+        # ==========================================
+        # ACCIÓN NO IMPLEMENTADA
+        # ==========================================
+
+        return OperationResult(
+            success=False,
+            action="query_not_implemented",
+            data={
+                "message": (
+                    f"La consulta "
+                    f"{query_filter.action} "
+                    f"aún no está implementada."
+                )
+            },
+        )

@@ -32,4 +32,6 @@ class Intent:
     
     DELETE_ALL_BUDGETS = "delete_all_budgets"
 
+    UPDATE_PROFILE_NAME = "update_profile_name"
+
     UNKNOWN = "unknown"

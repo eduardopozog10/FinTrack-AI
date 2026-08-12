@@ -65,6 +65,7 @@ class TelegramBotService:
             message=text,
             session_id=session_id,
             user_id=fintrack_user.id,
+            user_name=fintrack_user.full_name,
         )
 
         TelegramService.send_message(

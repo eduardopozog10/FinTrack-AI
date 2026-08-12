@@ -26,11 +26,17 @@ class AIConversationService:
             "budget_status_all",
             "balance",
             "today_expense",
-            "month_expense",    
+            "month_expense",
             "month_income",
             "expenses_created",
             "delete_all_expenses_confirmation",
             "delete_all_budgets_confirmation",
+            "max_expense",
+            "max_income",
+            "last_expense",
+            "last_income",
+            "expense_history",
+            "profile_name_updated",
         ]:
 
             print("Usando TemplateResponseService")
@@ -40,11 +46,6 @@ class AIConversationService:
         if context.action in [
             "total_expense",
             "total_income",
-            "max_expense",
-            "max_income",
-            "last_expense",
-            "last_income",
-            "expense_history",
         ]:
 
             print("Llamando a Gemini (query)...")

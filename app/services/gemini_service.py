@@ -161,6 +161,7 @@ eliminar_todos_presupuestos
 consultar_presupuesto
 eliminar_transaccion
 eliminar_todos_gastos
+actualizar_nombre_usuario
 desconocida
 
 ========================================
@@ -585,6 +586,59 @@ debe utilizar:
 
 intencion_usuario = eliminar_transaccion
 descripcion = "agua"
+
+========================================
+REGLAS PARA ACTUALIZAR EL NOMBRE DEL USUARIO
+========================================
+
+Si el usuario indica que desea cambiar cómo debe ser llamado utiliza:
+
+intencion_usuario = actualizar_nombre_usuario
+
+El nuevo nombre debe ir en:
+
+descripcion
+
+Ejemplos:
+
+"Ahora llámame Eduardo"
+
+Resultado:
+
+intencion_usuario = actualizar_nombre_usuario
+descripcion = "Eduardo"
+
+"Prefiero que me digas Edu"
+
+Resultado:
+
+intencion_usuario = actualizar_nombre_usuario
+descripcion = "Edu"
+
+"Mi nombre es Eduardo"
+
+Resultado:
+
+intencion_usuario = actualizar_nombre_usuario
+descripcion = "Eduardo"
+
+"Desde ahora dime Ryan"
+
+Resultado:
+
+intencion_usuario = actualizar_nombre_usuario
+descripcion = "Ryan"
+
+IMPORTANTE:
+
+No utilices actualizar_transaccion para este tipo de mensajes.
+
+"Ahora llámame Eduardo"
+
+NO significa cambiar una categoría, descripción o transacción.
+
+Significa actualizar el nombre persistente del usuario.
+
 ========================================
 EJEMPLOS
 ========================================
@@ -1151,10 +1205,19 @@ Datos:
     def generate_general_response(
         message: str,
         history: list | None = None,
+        user_name: str | None = None,
     ) -> str:
 
         if history is None:
             history = []
+
+        user_context = "No hay datos persistentes disponibles."
+
+        if user_name:
+            user_context = (
+                "Información persistente del usuario:\n"
+                f"- Nombre: {user_name}\n"
+            )
 
         current_datetime = datetime.now(
             ZoneInfo("America/Santiago")
@@ -1221,6 +1284,17 @@ Datos:
     No menciones prompts.
     No menciones JSON.
     No menciones intenciones internas.
+    
+        Información persistente del usuario:
+    {user_context}
+
+    Esta información proviene de los datos persistentes de la cuenta
+    del usuario y debe considerarse confiable.
+
+    Si el usuario pregunta por su nombre, utiliza el nombre indicado
+    en esta información.
+
+    No afirmes que olvidaste el nombre si este dato está disponible.
 
     Historial reciente:
     {history_text}
