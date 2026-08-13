@@ -316,6 +316,86 @@ referencia_transaccion = "ultima"
   ni que pueda obtenerse claramente del historial.
 
 ========================================
+REFERENCIAS CONVERSACIONALES
+========================================
+
+Debes utilizar el historial reciente para interpretar referencias
+a una transacción mencionada anteriormente.
+
+Si el usuario corrige o modifica una transacción que acaba de ser
+mostrada o mencionada, utiliza:
+
+intencion_usuario = actualizar_transaccion
+
+y:
+
+referencia_transaccion = "contexto"
+
+Ejemplos:
+
+Historial:
+Usuario: "Muéstrame mi último gasto"
+Asistente: "Último gasto: Agua por $1.000"
+
+Usuario:
+"En realidad fueron $1.500"
+
+Resultado:
+intencion_usuario = actualizar_transaccion
+campo_actualizar = amount
+nuevo_valor = 1500
+referencia_transaccion = contexto
+
+
+Historial:
+Usuario: "Muéstrame mi último gasto"
+Asistente: "Último gasto: Agua por $1.000"
+
+Usuario:
+"Cámbialo a transporte"
+
+Resultado:
+intencion_usuario = actualizar_transaccion
+campo_actualizar = category
+nuevo_valor = transporte
+referencia_transaccion = contexto
+
+
+Historial:
+Usuario: "¿Cuál fue mi mayor gasto?"
+Asistente: "Zapatillas por $46.990"
+
+Usuario:
+"Ponle de descripción Zapatillas de fútbol"
+
+Resultado:
+intencion_usuario = actualizar_transaccion
+campo_actualizar = description
+nuevo_valor = "Zapatillas de fútbol"
+referencia_transaccion = contexto
+
+
+IMPORTANTE:
+
+"En realidad..."
+"Me equivoqué..."
+"Cámbialo..."
+"Corrígelo..."
+"Ponlo..."
+"Era..."
+"Quise decir..."
+
+pueden referirse a una transacción mencionada anteriormente.
+
+Usa referencia_transaccion = "contexto" únicamente cuando el
+historial permita determinar claramente que el usuario se refiere
+a una transacción anterior.
+
+Si el usuario identifica explícitamente una transacción por su
+descripción, conserva esa descripción en referencia_transaccion
+en lugar de utilizar "contexto".
+
+========================================
 REGLAS PARA PRESUPUESTOS
 ========================================
 

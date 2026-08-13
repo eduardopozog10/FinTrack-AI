@@ -29,7 +29,8 @@ class CommandRouter:
 
         if command.intent in [
             Intent.DELETE_ALL_EXPENSES,
-            Intent.DELETE_ALL_BUDGETS,  
+            Intent.DELETE_ALL_BUDGETS,
+            Intent.UPDATE,
         ]:
 
             return service.process(

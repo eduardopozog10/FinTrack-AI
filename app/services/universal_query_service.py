@@ -158,6 +158,7 @@ class UniversalQueryService:
                     "amount": transaction.amount,
                     "category": transaction.category,
                     "created_at": transaction.created_at,
+                    "id": transaction.id,
                 },
             )
 
@@ -208,6 +209,7 @@ class UniversalQueryService:
                     "amount": transaction.amount,
                     "category": transaction.category,
                     "created_at": transaction.created_at,
+                    "id": transaction.id,
                 },
             )
 

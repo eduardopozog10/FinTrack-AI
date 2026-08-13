@@ -162,6 +162,39 @@ class AIOrchestrator:
             session_id=session_id,
         )
 
+        # ==========================================
+        # GUARDAR CONTEXTO DE TRANSACCIÓN
+        # ==========================================
+
+        if (
+            hasattr(result, "action")
+            and result.action in [
+                "last_expense",
+                "last_income",
+                "max_expense",
+                "max_income",
+            ]
+            and result.success
+            and result.data
+        ):
+
+            transaction_id = result.data.get("id")
+
+            if transaction_id is not None:
+
+                AIMemoryService.set_context(
+                    session_id=session_id,
+                    key="last_transaction_id",
+                    value=transaction_id,
+                )
+
+                print("========== Contexto ==========")
+                print(
+                    "Última transacción mencionada:",
+                    transaction_id,
+                )
+                print("==============================")
+
         response = AIResponseBuilder.build(
             command=command,
             result=result,

@@ -7,6 +7,8 @@ class AIMemoryService:
 
     # Acciones que están esperando confirmación del usuario
     _pending_actions = {}
+    # Contexto estructurado de la conversación
+    _context = defaultdict(dict)
 
     # ==========================================
     # HISTORIAL
@@ -74,6 +76,49 @@ class AIMemoryService:
         cls._pending_actions.pop(session_id, None)
 
     # ==========================================
+    # CONTEXTO CONVERSACIONAL
+    # ==========================================
+
+    @classmethod
+    def set_context(
+        cls,
+        session_id: str,
+        key: str,
+        value,
+    ):
+
+        cls._context[session_id][key] = value
+
+
+    @classmethod
+    def get_context(
+        cls,
+        session_id: str,
+        key: str,
+        default=None,
+    ):
+
+        return cls._context.get(
+            session_id,
+            {},
+        ).get(
+            key,
+            default,
+        )
+
+
+    @classmethod
+    def clear_context(
+        cls,
+        session_id: str,
+    ):
+
+        cls._context.pop(
+            session_id,
+            None,
+        )
+
+    # ==========================================
     # LIMPIAR MEMORIA COMPLETA
     # ==========================================
 
@@ -85,3 +130,4 @@ class AIMemoryService:
 
         cls._history.pop(session_id, None)
         cls._pending_actions.pop(session_id, None)
+        cls._context.pop(session_id, None)
