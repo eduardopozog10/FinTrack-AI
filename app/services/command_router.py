@@ -31,6 +31,9 @@ class CommandRouter:
             Intent.DELETE_ALL_EXPENSES,
             Intent.DELETE_ALL_BUDGETS,
             Intent.UPDATE,
+            Intent.EXPENSE,
+            Intent.INCOME,
+            Intent.DELETE,
         ]:
 
             return service.process(

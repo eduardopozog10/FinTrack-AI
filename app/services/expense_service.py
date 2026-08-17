@@ -6,6 +6,7 @@ from app.schemas.ai_command import AICommand
 from app.schemas.operation_result import OperationResult
 from app.services.transaction_service import TransactionService
 from app.services.category_normalizer_service import CategoryNormalizerService
+from app.services.ai_memory_service import AIMemoryService
 from app.events.event_bus import EventBus
 from app.events.expense_created_event import ExpenseCreatedEvent
 
@@ -17,6 +18,7 @@ class ExpenseService:
         session: Session,
         command: AICommand,
         user_id: int | None = None,
+        session_id: str | None = None,
     ):
 
         # ==========================================
@@ -67,6 +69,31 @@ class ExpenseService:
 
                 created_transactions.append(transaction)
 
+                # ==========================================
+                # AGREGAR TRANSACCIÓN A MEMORIA RECIENTE
+                # ==========================================
+
+                if session_id is not None:
+
+                    AIMemoryService.add_recent_transaction(
+                        session_id=session_id,
+                        transaction_id=transaction.id,
+                    )
+
+            # ==========================================
+            # GUARDAR GRUPO DE TRANSACCIONES
+            # ==========================================
+
+            if session_id is not None and created_transactions:
+
+                AIMemoryService.set_transaction_group(
+                    session_id=session_id,
+                    transaction_ids=[
+                        transaction.id
+                        for transaction in created_transactions
+                    ],
+                )
+
             return OperationResult(
                 success=True,
                 action="expenses_created",
@@ -110,6 +137,17 @@ class ExpenseService:
         )
 
         EventBus.dispatch(event)
+
+        # ==========================================
+        # AGREGAR TRANSACCIÓN A MEMORIA RECIENTE
+        # ==========================================
+
+        if session_id is not None:
+
+            AIMemoryService.add_recent_transaction(
+                session_id=session_id,
+                transaction_id=transaction.id,
+            )
 
         return OperationResult(
             success=True,

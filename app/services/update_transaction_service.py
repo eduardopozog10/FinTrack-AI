@@ -32,6 +32,7 @@ class UpdateTransactionService:
         # ==========================================
 
         if not update_field or update_value is None:
+
             return OperationResult(
                 success=False,
                 action="transaction_updated",
@@ -56,12 +57,14 @@ class UpdateTransactionService:
         # ==========================================
 
         if transaction_type == "gasto":
+
             query = query.where(
                 Transaction.transaction_type
                 == TransactionType.EXPENSE
             )
 
         elif transaction_type == "ingreso":
+
             query = query.where(
                 Transaction.transaction_type
                 == TransactionType.INCOME
@@ -79,71 +82,105 @@ class UpdateTransactionService:
                 .lower()
             )
 
+            resolved_transaction_id = None
+
             # ======================================
-            # REFERENCIA AL CONTEXTO CONVERSACIONAL
+            # 1. REFERENCIA CONVERSACIONAL
             # ======================================
 
-            if reference == "contexto":
+            if session_id is not None:
 
-                if session_id is None:
-                    return OperationResult(
-                        success=False,
-                        action="transaction_updated",
-                        data={
-                            "message": (
-                                "No pude determinar qué "
-                                "transacción quieres modificar."
-                            )
-                        },
-                    )
-
-                context_transaction_id = (
-                    AIMemoryService.get_context(
+                resolved_transaction_id = (
+                    AIMemoryService.resolve_transaction_reference(
                         session_id=session_id,
-                        key="last_transaction_id",
+                        reference=reference,
                     )
                 )
 
-                if context_transaction_id is None:
-                    return OperationResult(
-                        success=False,
-                        action="transaction_updated",
-                        data={
-                            "message": (
-                                "No tengo una transacción reciente "
-                                "a la que pueda hacer referencia."
-                            )
-                        },
+            # ======================================
+            # 2. REFERENCIA SEMÁNTICA EN EL GRUPO
+            # ======================================
+
+            if (
+                resolved_transaction_id is None
+                and session_id is not None
+            ):
+
+                transaction_group = (
+                    AIMemoryService.get_transaction_group(
+                        session_id=session_id,
                     )
+                )
+
+                if transaction_group:
+
+                    group_query = (
+                        select(Transaction)
+                        .where(
+                            Transaction.user_id == user_id
+                        )
+                        .where(
+                            Transaction.id.in_(
+                                transaction_group
+                            )
+                        )
+                        .where(
+                            Transaction.description.ilike(
+                                f"%{transaction_reference}%"
+                            )
+                        )
+                    )
+
+                    # Mantener filtro por tipo
+                    # también dentro del grupo.
+                    if transaction_type == "gasto":
+
+                        group_query = group_query.where(
+                            Transaction.transaction_type
+                            == TransactionType.EXPENSE
+                        )
+
+                    elif transaction_type == "ingreso":
+
+                        group_query = group_query.where(
+                            Transaction.transaction_type
+                            == TransactionType.INCOME
+                        )
+
+                    group_transaction = (
+                        session.exec(
+                            group_query
+                        ).first()
+                    )
+
+                    if group_transaction is not None:
+
+                        resolved_transaction_id = (
+                            group_transaction.id
+                        )
+
+            # ======================================
+            # 3. USAR ID RESUELTO
+            # ======================================
+
+            if resolved_transaction_id is not None:
 
                 query = query.where(
                     Transaction.id
-                    == context_transaction_id
+                    == resolved_transaction_id
                 )
 
             # ======================================
-            # REFERENCIAS NORMALES
+            # 4. FALLBACK: HISTORIAL COMPLETO
             # ======================================
 
             else:
 
-                generic_references = [
-                    "ultima",
-                    "última",
-                    "ultimo",
-                    "último",
-                    "anterior",
-                ]
-
-                # Si no es una referencia genérica,
-                # buscamos por descripción.
-                if reference not in generic_references:
-
-                    query = query.where(
-                        Transaction.description.ilike(
-                            f"%{transaction_reference}%"
-                        )
+                query = query.where(
+                    Transaction.description.ilike(
+                        f"%{transaction_reference}%"
                     )
+                )
 
         # ==========================================
         # EJECUTAR CONSULTA
@@ -160,6 +197,7 @@ class UpdateTransactionService:
         # ==========================================
 
         if transaction is None:
+
             return OperationResult(
                 success=False,
                 action="transaction_updated",
@@ -185,11 +223,13 @@ class UpdateTransactionService:
         if update_field == "amount":
 
             try:
+
                 transaction.amount = float(
                     update_value
                 )
 
             except (TypeError, ValueError):
+
                 return OperationResult(
                     success=False,
                     action="transaction_updated",
@@ -222,6 +262,7 @@ class UpdateTransactionService:
                 )
 
             else:
+
                 return OperationResult(
                     success=False,
                     action="transaction_updated",
@@ -259,10 +300,9 @@ class UpdateTransactionService:
 
         if session_id is not None:
 
-            AIMemoryService.set_context(
+            AIMemoryService.add_recent_transaction(
                 session_id=session_id,
-                key="last_transaction_id",
-                value=transaction.id,
+                transaction_id=transaction.id,
             )
 
         # ==========================================

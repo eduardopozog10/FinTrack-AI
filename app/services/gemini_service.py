@@ -312,6 +312,111 @@ referencia_transaccion = "ultima"
   específica por su descripción, utiliza esa descripción en vez
   de "ultima".
 
+IMPORTANTE — CORRECCIONES DE TRANSACCIONES RECIENTES:
+
+Cuando el usuario menciona una transacción que aparece en el historial
+reciente y proporciona un nuevo valor para ella, debes considerar
+primero si está corrigiendo esa transacción antes de interpretar el
+mensaje como una nueva transacción.
+
+Esto aplica especialmente cuando utiliza expresiones como:
+
+- "fueron..."
+- "era..."
+- "eran..."
+- "costó..."
+- "costaron..."
+- "en realidad..."
+- "me equivoqué..."
+- "finalmente fueron..."
+- "al final fueron..."
+
+Ejemplo:
+
+Historial:
+Usuario:
+"Gasté 20000 en bencina, 8000 en pizza y 5000 en estacionamiento"
+
+Asistente:
+"Registré 3 gastos:
+- 20000 bencina
+- 8000 pizza
+- 5000 estacionamiento"
+
+Usuario:
+"La pizza fueron 12000"
+
+Resultado:
+
+intencion_usuario = actualizar_transaccion
+tipo_transaccion = gasto
+campo_actualizar = amount
+nuevo_valor = 12000
+referencia_transaccion = "pizza"
+
+Usuario:
+"El estacionamiento fueron 7000"
+
+Resultado:
+
+intencion_usuario = actualizar_transaccion
+tipo_transaccion = gasto
+campo_actualizar = amount
+nuevo_valor = 7000
+referencia_transaccion = "estacionamiento"
+
+Usuario:
+"La bencina eran 25000"
+
+Resultado:
+
+intencion_usuario = actualizar_transaccion
+tipo_transaccion = gasto
+campo_actualizar = amount
+nuevo_valor = 25000
+referencia_transaccion = "bencina"
+
+La presencia de una descripción + un monto NO significa automáticamente
+que el usuario desea registrar una nueva transacción.
+
+Debes distinguir entre REGISTRO y CORRECCIÓN utilizando el lenguaje
+y el historial reciente.
+
+Ejemplos de NUEVAS transacciones:
+
+"Gasté 7000 en estacionamiento"
+→ registrar_gasto
+
+"Compré estacionamiento por 7000"
+→ registrar_gasto
+
+"Pagué 7000 de estacionamiento"
+→ registrar_gasto
+
+Ejemplos de CORRECCIONES:
+
+"El estacionamiento fueron 7000"
+→ actualizar_transaccion
+
+"El estacionamiento era 7000"
+→ actualizar_transaccion
+
+"El estacionamiento en realidad costó 7000"
+→ actualizar_transaccion
+
+"La pizza fueron 12000"
+→ actualizar_transaccion
+
+Estas expresiones deben interpretarse como correcciones solamente
+cuando el historial reciente permita identificar razonablemente la
+transacción mencionada.
+
+Si no existe una transacción relacionada en el historial y el mensaje
+no expresa claramente una corrección, no inventes una actualización.
+
+Cuando el usuario identifica la transacción mediante su descripción,
+utiliza esa descripción como referencia_transaccion.
+
 - No inventes una referencia que el usuario no haya mencionado
   ni que pueda obtenerse claramente del historial.
 
@@ -394,6 +499,119 @@ a una transacción anterior.
 Si el usuario identifica explícitamente una transacción por su
 descripción, conserva esa descripción en referencia_transaccion
 en lugar de utilizar "contexto".
+
+========================================
+REFERENCIAS POSICIONALES DE TRANSACCIONES
+========================================
+
+El usuario puede referirse a transacciones recientes utilizando
+su posición dentro de la conversación.
+
+Cuando esto ocurra, conserva la referencia indicada por el usuario
+en el campo referencia_transaccion.
+
+Valores especiales permitidos:
+
+"contexto"
+"ultima"
+"anterior"
+"primera"
+"segunda"
+"tercera"
+
+También acepta las variantes masculinas:
+
+"primero"
+"segundo"
+"tercero"
+
+REGLAS:
+
+- "última", "último", "la última", "el último"
+  → referencia_transaccion = "ultima"
+
+- "anterior", "la anterior", "el anterior"
+  → referencia_transaccion = "anterior"
+
+- "primera", "primero", "la primera", "el primero"
+  → referencia_transaccion = "primera"
+
+- "segunda", "segundo", "la segunda", "el segundo"
+  → referencia_transaccion = "segunda"
+
+- "tercera", "tercero", "la tercera", "el tercero"
+  → referencia_transaccion = "tercera"
+
+IMPORTANTE:
+
+"primera", "segunda" y "tercera" representan el orden en que
+las transacciones fueron mencionadas o registradas dentro del
+contexto reciente.
+
+Por ejemplo:
+
+Usuario:
+"Gasté 20000 en bencina, 8000 en comida y 5000 en estacionamiento"
+
+Luego:
+
+"El primero en realidad fueron 25000"
+
+Resultado:
+
+intencion_usuario = actualizar_transaccion
+campo_actualizar = amount
+nuevo_valor = 25000
+referencia_transaccion = "primera"
+
+
+Usuario:
+"Gasté 20000 en bencina, 8000 en comida y 5000 en estacionamiento"
+
+Luego:
+
+"El segundo fueron 10000"
+
+Resultado:
+
+intencion_usuario = actualizar_transaccion
+campo_actualizar = amount
+nuevo_valor = 10000
+referencia_transaccion = "segunda"
+
+
+Usuario:
+"Gasté 20000 en bencina"
+Usuario:
+"Gasté 8000 en comida"
+
+Luego:
+
+"El anterior fueron 22000"
+
+Resultado:
+
+intencion_usuario = actualizar_transaccion
+campo_actualizar = amount
+nuevo_valor = 22000
+referencia_transaccion = "anterior"
+
+
+Si el usuario identifica explícitamente la transacción mediante
+su descripción, utiliza la descripción en lugar de una referencia
+posicional.
+
+Ejemplo:
+
+"La bencina en realidad fueron 25000"
+
+referencia_transaccion = "bencina"
+
+No conviertas una referencia posicional en una descripción inventada.
+
+Si no existe contexto suficiente para determinar la transacción,
+conserva la referencia indicada y deja que el backend resuelva
+si existe una transacción válida.
 
 ========================================
 REGLAS PARA PRESUPUESTOS
